@@ -1039,15 +1039,15 @@ fn expand_env_vars(input: &str, overrides: Option<&BTreeMap<String, String>>) ->
     out
 }
 
-/// Configuration for `ShortcutsMan`.
+/// Configuration for shortcut inspection.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct ShortcutsManConfig {
+pub struct ShortcutsConfig {
     pub scan_roots: Vec<PathBuf>,
     pub include_recent: bool,
     pub env_overrides: BTreeMap<String, String>,
 }
 
-impl ShortcutsManConfig {
+impl ShortcutsConfig {
     /// Discover standard Windows user/system shortcut directories when `scan_roots` is empty.
     pub fn effective_roots(&self) -> Vec<PathBuf> {
         if !self.scan_roots.is_empty() {
@@ -1085,28 +1085,28 @@ impl ShortcutsManConfig {
     }
 }
 
-/// Read-only `ShortcutsMan` `TableProvider`.
-pub struct ShortcutsManProvider {
-    config: ShortcutsManConfig,
+/// Read-only `.lnk` shortcut `TableProvider`.
+pub struct ShortcutsProvider {
+    config: ShortcutsConfig,
     backend: Arc<dyn FileSystemOps>,
 }
 
-impl ShortcutsManProvider {
-    pub fn new(config: ShortcutsManConfig) -> Self {
+impl ShortcutsProvider {
+    pub fn new(config: ShortcutsConfig) -> Self {
         Self {
             config,
             backend: Arc::new(OsFileSystem),
         }
     }
 
-    pub fn with_backend(config: ShortcutsManConfig, backend: Arc<dyn FileSystemOps>) -> Self {
+    pub fn with_backend(config: ShortcutsConfig, backend: Arc<dyn FileSystemOps>) -> Self {
         Self { config, backend }
     }
 
     pub fn schema_def() -> TableSchema {
         TableSchema::new(
-            "shortcuts_man",
-            "ShortcutsMan — Windows .lnk Shortcut Inspector",
+            "shortcuts_view",
+            "Windows .lnk Shortcut Inspector",
             vec![
                 ColumnDef::new("shortcut_path", "Shortcut Path", ColumnType::Text).with_width_hint(280),
                 ColumnDef::new("target_path", "Target Path", ColumnType::Text).with_width_hint(280),
@@ -1289,9 +1289,9 @@ fn collect_lnk_files(path: &Path, backend: &dyn FileSystemOps, out: &mut Vec<Pat
     }
 }
 
-impl TableProvider for ShortcutsManProvider {
+impl TableProvider for ShortcutsProvider {
     fn tool_id(&self) -> &'static str {
-        "shortcuts_man"
+        "shortcuts_view"
     }
 
     fn description(&self) -> &'static str {
@@ -1313,12 +1313,12 @@ impl TableProvider for ShortcutsManProvider {
 }
 
 /// Mutating `ActionCommand` rewriting a `.lnk` target path.
-pub struct ShortcutsManFixAction {
+pub struct ShortcutsFixAction {
     backend: Arc<dyn FileSystemOps>,
     policy: PolicyContext,
 }
 
-impl ShortcutsManFixAction {
+impl ShortcutsFixAction {
     pub fn new(backend: Arc<dyn FileSystemOps>) -> Self {
         Self {
             backend,
@@ -1332,9 +1332,9 @@ impl ShortcutsManFixAction {
     }
 }
 
-impl ActionCommand for ShortcutsManFixAction {
+impl ActionCommand for ShortcutsFixAction {
     fn command_id(&self) -> &'static str {
-        "shortcuts_man_fix_target"
+        "shortcuts_fix_target"
     }
 
     fn description(&self) -> &'static str {
@@ -1405,12 +1405,12 @@ impl ActionCommand for ShortcutsManFixAction {
 }
 
 /// Mutating `ActionCommand` deleting `.lnk` files (with `only_if_broken` safety guard).
-pub struct ShortcutsManDeleteAction {
+pub struct ShortcutsDeleteAction {
     backend: Arc<dyn FileSystemOps>,
     policy: PolicyContext,
 }
 
-impl ShortcutsManDeleteAction {
+impl ShortcutsDeleteAction {
     pub fn new(backend: Arc<dyn FileSystemOps>) -> Self {
         Self {
             backend,
@@ -1424,9 +1424,9 @@ impl ShortcutsManDeleteAction {
     }
 }
 
-impl ActionCommand for ShortcutsManDeleteAction {
+impl ActionCommand for ShortcutsDeleteAction {
     fn command_id(&self) -> &'static str {
-        "shortcuts_man_delete"
+        "shortcuts_delete"
     }
 
     fn description(&self) -> &'static str {

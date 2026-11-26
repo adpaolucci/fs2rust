@@ -1152,20 +1152,20 @@ fn mcp_registry_exposes_all_11_tables_and_enforces_policy_gates_on_all_4_actions
 fn live_win32_unprivileged_and_tempdir_smoke_tests() {
     let backend = LiveNtfsBackend;
 
-    // 1. Live DriveLetterView always succeeds for logical drives on Windows
+    // 1. Live drive letter enumeration always succeeds for logical drives on Windows
     let drives = backend.list_drive_letters().unwrap();
     assert!(!drives.is_empty());
 
-    // 2. Live AppReadWriteCounter enumerates processes cleanly (handles protected PIDs gracefully)
+    // 2. Live process I/O counter enumerates processes cleanly (handles protected PIDs gracefully)
     let procs = backend.snapshot_process_io().unwrap();
     assert!(!procs.is_empty());
 
-    // 3. Live FolderChangesView bounded timeout exits cleanly without hanging
+    // 3. Live folder change watch bounded timeout exits cleanly without hanging
     let tmp = tempfile::tempdir().unwrap();
     let changes = backend.watch_folder_changes(tmp.path(), false, 40, 64).unwrap();
     assert!(changes.is_empty());
 
-    // 4. Live AlternateStreamView + delete on tempdir (NTFS host)
+    // 4. Live alternate data streams + delete on tempdir (NTFS host)
     let host_file = tmp.path().join("doc.txt");
     std::fs::write(&host_file, b"primary content").unwrap();
     let ads_path = format!("{}:Zone.Identifier", host_file.display());
@@ -1181,7 +1181,7 @@ fn live_win32_unprivileged_and_tempdir_smoke_tests() {
         assert!(!after.iter().any(|s| s.stream_name.contains("Zone.Identifier")));
     }
 
-    // 5. Live PropertySystemView read on tempdir file
+    // 5. Live property system read on tempdir file
     let props = backend.read_file_properties(&tmp.path().join("doc.txt"));
     assert!(props.is_ok() || matches!(props, Err(FsError::PermissionDenied(_) | FsError::Unsupported(_))));
 

@@ -1,40 +1,40 @@
 #![forbid(unsafe_code)]
 
-pub mod bulk_file_changer;
+pub mod bulk_file_time;
 pub mod folder_time_update;
 pub mod folders_report;
-pub mod hash_my_files;
-pub mod search_my_files;
-pub mod shortcuts_man;
+pub mod hash_files;
+pub mod search_files;
+pub mod shortcuts;
 
 use fs2rust_core::{FileSystemOps, OsFileSystem};
 use guap_mcp::McpServerRegistry;
 use std::sync::Arc;
 
-pub use bulk_file_changer::{
-    BulkChangeSpec, BulkFileChangerAction, BulkFileChangerPreviewProvider, TimestampChange, TimestampField,
+pub use bulk_file_time::{
+    BulkChangeSpec, BulkFileTimeAction, BulkFileTimePreviewProvider, TimestampChange, TimestampField,
 };
 pub use folder_time_update::{
     FolderTimeSource, FolderTimeUpdateAction, FolderTimeUpdateConfig, FolderTimeUpdatePreviewProvider,
 };
 pub use folders_report::{FoldersReportConfig, FoldersReportProvider};
-pub use hash_my_files::{HashAlgorithmSet, HashMyFilesConfig, HashMyFilesProvider};
-pub use search_my_files::{ContentSearchMode, SearchMyFilesConfig, SearchMyFilesProvider};
-pub use shortcuts_man::{
-    ExtraDataBlock, LinkInfo, LinkTargetIdList, ShellLinkFile, ShellLinkHeader, ShortcutsManConfig,
-    ShortcutsManDeleteAction, ShortcutsManFixAction, ShortcutsManProvider, ShowCommand, StringData,
+pub use hash_files::{HashAlgorithmSet, HashFilesConfig, HashFilesProvider};
+pub use search_files::{ContentSearchMode, SearchFilesConfig, SearchFilesProvider};
+pub use shortcuts::{
+    ExtraDataBlock, LinkInfo, LinkTargetIdList, ShellLinkFile, ShellLinkHeader, ShortcutsConfig,
+    ShortcutsDeleteAction, ShortcutsFixAction, ShortcutsProvider, ShowCommand, StringData,
 };
 
 /// Register all 6 `fs2rust-search` read-only `TableProvider`s and 4 mutating `ActionCommand`s
 /// on the given `McpServerRegistry`.
 pub fn register_search_tools(
     registry: &mut McpServerRegistry,
-    search_cfg: SearchMyFilesConfig,
+    search_cfg: SearchFilesConfig,
     bulk_spec: BulkChangeSpec,
     folder_time_cfg: FolderTimeUpdateConfig,
     folders_report_cfg: FoldersReportConfig,
-    shortcuts_cfg: ShortcutsManConfig,
-    hash_cfg: HashMyFilesConfig,
+    shortcuts_cfg: ShortcutsConfig,
+    hash_cfg: HashFilesConfig,
 ) {
     let os_fs: Arc<dyn FileSystemOps> = Arc::new(OsFileSystem);
     register_search_tools_with_backend(
@@ -54,15 +54,15 @@ pub fn register_search_tools(
 pub fn register_search_tools_with_backend(
     registry: &mut McpServerRegistry,
     backend: Arc<dyn FileSystemOps>,
-    search_cfg: SearchMyFilesConfig,
+    search_cfg: SearchFilesConfig,
     bulk_spec: BulkChangeSpec,
     folder_time_cfg: FolderTimeUpdateConfig,
     folders_report_cfg: FoldersReportConfig,
-    shortcuts_cfg: ShortcutsManConfig,
-    hash_cfg: HashMyFilesConfig,
+    shortcuts_cfg: ShortcutsConfig,
+    hash_cfg: HashFilesConfig,
 ) {
-    registry.register_table(Arc::new(SearchMyFilesProvider::new(search_cfg)));
-    registry.register_table(Arc::new(BulkFileChangerPreviewProvider::new(
+    registry.register_table(Arc::new(SearchFilesProvider::new(search_cfg)));
+    registry.register_table(Arc::new(BulkFileTimePreviewProvider::new(
         bulk_spec,
         Arc::clone(&backend),
     )));
@@ -74,14 +74,14 @@ pub fn register_search_tools_with_backend(
         folders_report_cfg,
         Arc::clone(&backend),
     )));
-    registry.register_table(Arc::new(ShortcutsManProvider::with_backend(
+    registry.register_table(Arc::new(ShortcutsProvider::with_backend(
         shortcuts_cfg,
         Arc::clone(&backend),
     )));
-    registry.register_table(Arc::new(HashMyFilesProvider::new(hash_cfg)));
+    registry.register_table(Arc::new(HashFilesProvider::new(hash_cfg)));
 
-    registry.register_action(Arc::new(BulkFileChangerAction::new(Arc::clone(&backend))));
+    registry.register_action(Arc::new(BulkFileTimeAction::new(Arc::clone(&backend))));
     registry.register_action(Arc::new(FolderTimeUpdateAction::new(Arc::clone(&backend))));
-    registry.register_action(Arc::new(ShortcutsManFixAction::new(Arc::clone(&backend))));
-    registry.register_action(Arc::new(ShortcutsManDeleteAction::new(backend)));
+    registry.register_action(Arc::new(ShortcutsFixAction::new(Arc::clone(&backend))));
+    registry.register_action(Arc::new(ShortcutsDeleteAction::new(backend)));
 }

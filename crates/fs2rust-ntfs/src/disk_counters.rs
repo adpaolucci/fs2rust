@@ -75,7 +75,7 @@ pub struct DiskCountersConfig {
 pub fn disk_counters_schema() -> TableSchema {
     TableSchema::new(
         "disk_counters_view",
-        "DiskCountersView - Physical & Logical Disk Performance Counters",
+        "Physical & Logical Disk Performance Counters",
         vec![
             ColumnDef::new("device", "Device", ColumnType::Text).with_width_hint(160),
             ColumnDef::new("storage_device_number", "Disk #", ColumnType::Uint).with_width_hint(75),

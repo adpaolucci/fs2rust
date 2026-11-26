@@ -520,7 +520,7 @@ pub struct DiskSmartConfig {
 pub fn disk_smart_schema() -> TableSchema {
     TableSchema::new(
         "disk_smart_view",
-        "DiskSmartView - ATA S.M.A.R.T. & NVMe Health Log Attributes",
+        "ATA S.M.A.R.T. & NVMe Health Log Attributes",
         vec![
             ColumnDef::new("device", "Device", ColumnType::Text).with_width_hint(140),
             ColumnDef::new("model", "Model", ColumnType::Text).with_width_hint(180),

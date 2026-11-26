@@ -6,8 +6,8 @@ use fs2rust_data::compare::{CompareKeyMode, TableCompareOptions, TableComparePro
 use fs2rust_data::csv_view::{CsvTableProvider, CsvViewOptions};
 use fs2rust_data::encoding::{TextEncoding, decode_bytes};
 use fs2rust_data::exif::{ExifDataViewProvider, IfdKind, TiffEndianness, parse_exif};
-use fs2rust_data::getnir::{GetNirOutputFormat, GetNirRequest, GetNirSource, evaluate_getnir};
 use fs2rust_data::html2text::{HtmlAsTextOptions, HtmlAsTextProvider, HtmlLinksProvider, html_to_text};
+use fs2rust_data::query::{TabularQueryFormat, TabularQueryRequest, TabularQuerySource, evaluate_query};
 use fs2rust_data::register_data_tools;
 use guap_export::{ExportFormat, ExportOptions};
 use guap_mcp::{McpServerRegistry, PolicyMode};
@@ -125,18 +125,18 @@ fn table_text_compare_keyed_and_positional_with_union_columns() {
 }
 
 #[test]
-fn getnir_evaluates_stdin_jsonl_and_formats_outputs() {
+fn query_evaluates_stdin_jsonl_and_formats_outputs() {
     let jsonl =
         b"{\"name\":\"alpha\",\"score\":10}\n{\"name\":\"beta\",\"score\":42}\n{\"name\":\"gamma\",\"score\":7}\n";
-    let eval = evaluate_getnir(
-        GetNirSource::StdinBytes(jsonl.to_vec()),
-        &GetNirRequest {
+    let eval = evaluate_query(
+        TabularQuerySource::StdinBytes(jsonl.to_vec()),
+        &TabularQueryRequest {
             columns: Some(vec!["name".to_string(), "score".to_string()]),
             where_expr: Some("score >= 10".to_string()),
             sort: Some("score:desc".to_string()),
             offset: 0,
             top: Some(1),
-            format: GetNirOutputFormat::NirAlignedText,
+            format: TabularQueryFormat::AlignedText,
         },
     )
     .unwrap();
@@ -696,7 +696,7 @@ fn csv_file_view_unique_column_ids_and_leading_zero_decimals() {
     let ids: Vec<String> = dup_provider.schema().columns.into_iter().map(|c| c.id).collect();
     assert_eq!(ids, vec!["foo_2", "foo", "foo_3"]);
 
-    // Verify passing to TableTextCompare succeeds without duplicate column id error
+    // Verify passing to TableCompareProvider succeeds without duplicate column id error
     let dup_provider2 = CsvTableProvider::from_bytes("dups2.csv", csv_dups, CsvViewOptions::default()).unwrap();
     let cmp = TableCompareProvider::compare(
         TableInput::Provider(Arc::new(dup_provider)),

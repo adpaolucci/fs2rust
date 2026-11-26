@@ -8,7 +8,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-/// Heading formatting style for `HTMLAsText`.
+/// Heading formatting style for HTML-to-text conversion.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum HeadingStyle {
     #[default]
@@ -17,7 +17,7 @@ pub enum HeadingStyle {
     Plain,
 }
 
-/// Configuration options for `HTMLAsText`.
+/// Configuration options for HTML-to-text conversion.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HtmlAsTextOptions {
     pub heading_style: HeadingStyle,
@@ -1001,7 +1001,7 @@ fn decode_numeric_char(code: u32) -> Option<char> {
     char::from_u32(code)
 }
 
-/// Primary `TableProvider` for `HTMLAsText`.
+/// Primary `TableProvider` for HTML-to-text extraction.
 pub struct HtmlAsTextProvider {
     items: Vec<(String, HtmlAsTextOutput)>,
 }
@@ -1030,7 +1030,7 @@ impl HtmlAsTextProvider {
     pub fn schema_def() -> TableSchema {
         TableSchema::new(
             "fs2rust.data.html_as_text",
-            "HTMLAsText — HTML Text & Structure Extractor",
+            "HTML Text & Structure Extractor",
             vec![
                 ColumnDef::new("source_path", "Source Path", ColumnType::Text).with_width_hint(240),
                 ColumnDef::new("title", "Title", ColumnType::Text).with_width_hint(180),
@@ -1101,7 +1101,7 @@ impl HtmlLinksProvider {
     pub fn schema_def() -> TableSchema {
         TableSchema::new(
             "fs2rust.data.html_links",
-            "HTMLAsText — Extracted Links",
+            "HTML Extracted Links",
             vec![
                 ColumnDef::new("source_path", "Source Path", ColumnType::Text).with_width_hint(220),
                 ColumnDef::new("index", "Index", ColumnType::Uint).with_width_hint(70),

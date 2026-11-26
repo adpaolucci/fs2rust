@@ -9,8 +9,8 @@ use clap::{Args, Parser, Subcommand};
 use fs2rust_core::{FileSystemOps, OsFileSystem};
 use fs2rust_data::{
     AddrViewProvider, CodegenInput, CodegenTarget, CodegenTemplate, CsvTableProvider, CsvViewOptions, EscapeMode,
-    ExifDataViewProvider, GetNirRequest, GetNirSource, GetNirTableProvider, HtmlAsTextOptions, HtmlAsTextProvider,
-    SimpleCodeGeneratorProvider, TableCompareOptions, TableCompareProvider, TableInput,
+    ExifDataViewProvider, HtmlAsTextOptions, HtmlAsTextProvider, SimpleCodeGeneratorProvider, TableCompareOptions,
+    TableCompareProvider, TableInput, TabularQueryProvider, TabularQueryRequest, TabularQuerySource,
 };
 use fs2rust_mcp::{
     SuiteWiring, build_fs2rust_registry, build_suite_wiring, build_synthetic_suite_wiring, print_tools_manifest_json,
@@ -26,14 +26,13 @@ use fs2rust_ntfs::{
 };
 use fs2rust_report::{default_export_options, render_table_report, write_bundle_report, write_table_report};
 use fs2rust_search::{
-    BulkChangeSpec, BulkFileChangerPreviewProvider, FolderTimeSource, FolderTimeUpdateConfig,
-    FolderTimeUpdatePreviewProvider, FoldersReportConfig, FoldersReportProvider, HashMyFilesConfig,
-    HashMyFilesProvider, SearchMyFilesConfig, SearchMyFilesProvider, ShortcutsManConfig, ShortcutsManProvider,
-    TimestampChange,
+    BulkChangeSpec, BulkFileTimePreviewProvider, FolderTimeSource, FolderTimeUpdateConfig,
+    FolderTimeUpdatePreviewProvider, FoldersReportConfig, FoldersReportProvider, HashFilesConfig, HashFilesProvider,
+    SearchFilesConfig, SearchFilesProvider, ShortcutsConfig, ShortcutsProvider, TimestampChange,
 };
 use guap_export::{ExportFormat, write_custody_manifest_json};
 use guap_mcp::PolicyMode;
-use guap_table::{GetNirQuery, TableProvider, TableQuery};
+use guap_table::{GuapQuery, TableProvider, TableQuery};
 use serde_json::{Value, json};
 
 #[derive(Parser, Debug)]
@@ -67,7 +66,7 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub custody: Option<PathBuf>,
 
-    /// GetNir filter expression (e.g. "size_bytes > 100" or "filename ~ txt")
+    /// Tabular filter expression (e.g. "size_bytes > 100" or "filename ~ txt")
     #[arg(long, global = true)]
     pub filter: Option<String>,
 
@@ -103,7 +102,7 @@ pub enum Commands {
         #[command(subcommand)]
         sub: NtfsSub,
     },
-    /// CSV viewer, table diff, GetNir query, EXIF, codegen, HTML-to-text, and contact book tools (7)
+    /// CSV viewer, table diff, tabular query, EXIF, codegen, HTML-to-text, and contact book tools (7)
     Data {
         #[command(subcommand)]
         sub: DataSub,
@@ -125,19 +124,19 @@ pub enum Commands {
 
 #[derive(Subcommand, Debug)]
 pub enum SearchSub {
-    /// SearchMyFiles — multi-threaded file search & duplicate grouping
+    /// Multi-threaded file search & duplicate grouping
     Files(SearchFilesArgs),
-    /// BulkFileChanger — preview or apply timestamp & attribute changes
+    /// Preview or apply bulk timestamp & attribute changes
     #[command(visible_alias = "bulk-change")]
     BulkTime(BulkTimeArgs),
-    /// FolderTimeUpdate — preview or apply bottom-up folder timestamps
+    /// Preview or apply bottom-up folder timestamps
     FolderTime(FolderTimeArgs),
-    /// FoldersReport — directory size, size-on-disk, and count aggregator
+    /// Directory size, size-on-disk, and count aggregator
     #[command(visible_alias = "folders")]
     Report(FoldersReportArgs),
-    /// ShortcutsMan — pure-Rust [MS-SHLLINK] .lnk parser, target fixer, and broken deleter
+    /// Pure-Rust [MS-SHLLINK] .lnk parser, target fixer, and broken deleter
     Shortcuts(ShortcutsArgs),
-    /// HashMyFiles — single-pass MD5, SHA-1, SHA-256, SHA-512, and CRC32 hasher
+    /// Single-pass MD5, SHA-1, SHA-256, SHA-512, and CRC32 hasher
     Hash(HashArgs),
 }
 
@@ -239,29 +238,29 @@ pub struct HashArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum NtfsSub {
-    /// DriveLetterView — logical drives, volume GUIDs, and MountedDevices
+    /// Logical drives, volume GUIDs, and MountedDevices
     Drives(DrivesArgs),
-    /// DiskCountersView — IOCTL_DISK_PERFORMANCE read/write counters & queue depth
+    /// IOCTL_DISK_PERFORMANCE read/write counters & queue depth
     #[command(visible_alias = "disk-counters")]
     Counters(DiskCountersArgs),
-    /// FileActivityWatch — ETW Microsoft-Windows-Kernel-File activity monitor
+    /// ETW Microsoft-Windows-Kernel-File activity monitor
     #[command(visible_alias = "file-activity")]
     FileWatch(EtwWatchArgs),
-    /// FolderChangesView — ReadDirectoryChangesW directory change monitor
+    /// ReadDirectoryChangesW directory change monitor
     #[command(visible_alias = "folder-changes")]
     FolderWatch(FolderWatchArgs),
-    /// FileAccessErrorView — ETW Kernel-File non-zero NTSTATUS error monitor
+    /// ETW Kernel-File non-zero NTSTATUS error monitor
     #[command(visible_alias = "file-errors")]
     AccessErr(EtwWatchArgs),
-    /// AppReadWriteCounter — per-process GetProcessIoCounters & I/O rate view
+    /// Per-process GetProcessIoCounters & I/O rate view
     AppIo(AppIoArgs),
-    /// DiskSmartView — ATA S.M.A.R.T. & NVMe health log attributes
+    /// ATA S.M.A.R.T. & NVMe health log attributes
     Smart(DiskSmartArgs),
-    /// AlternateStreamView — NTFS Alternate Data Streams (FindFirstStreamW / $MFT)
+    /// NTFS Alternate Data Streams (FindFirstStreamW / $MFT)
     Ads(AdsArgs),
-    /// NTFSLinksView — symlinks, junctions, reparse points, and hardlinks
+    /// Symlinks, junctions, reparse points, and hardlinks
     Links(LinksArgs),
-    /// PropertySystemView — Windows Property System (IPropertyStore / propsys.dll)
+    /// Windows Property System (IPropertyStore / propsys.dll)
     Props(PropsArgs),
     /// NTFS USN Journal View — $UsnJrnl:$J USN_RECORD_V2/V3 reader
     Usn(UsnArgs),
@@ -378,21 +377,21 @@ pub struct UsnArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum DataSub {
-    /// CSVFileView — auto-delimiter & typed CSV/TSV viewer
+    /// Auto-delimiter & typed CSV/TSV viewer
     Csv(DataPathArgs),
-    /// TableTextCompare — diff two CSV/TSV/JSONL files
+    /// Diff two CSV/TSV/JSONL files
     #[command(visible_alias = "compare")]
     Diff(DataDiffArgs),
-    /// GetNir — tabular expression query evaluator
-    Getnir(DataGetNirArgs),
-    /// ExifDataView — pure-Rust JPEG/TIFF EXIF IFD inspector
+    /// Tabular expression query evaluator
+    Query(DataQueryArgs),
+    /// Pure-Rust JPEG/TIFF EXIF IFD inspector
     Exif(DataPathArgs),
-    /// SimpleCodeGenerator — template snippet generator from JSON or CSV
+    /// Template snippet generator from JSON or CSV
     Codegen(DataCodegenArgs),
-    /// HTMLAsText — pure-Rust HTML-to-text & link footnote extractor
+    /// Pure-Rust HTML-to-text & link footnote extractor
     #[command(visible_alias = "html")]
     Html2text(DataPathArgs),
-    /// AddrView — pure-Rust .vcf, .ldif, and contact .csv reader
+    /// Pure-Rust .vcf, .ldif, and contact .csv reader
     Addr(DataPathArgs),
 }
 
@@ -417,7 +416,7 @@ pub struct DataDiffArgs {
 }
 
 #[derive(Args, Debug)]
-pub struct DataGetNirArgs {
+pub struct DataQueryArgs {
     /// Input file path (.csv/.tsv/.jsonl)
     #[arg(long)]
     pub path: Option<PathBuf>,
@@ -470,7 +469,7 @@ pub struct GuiArgs {
 
 #[derive(Args, Debug)]
 pub struct ActionArgs {
-    /// Registered ActionCommand ID (e.g. bulk_file_changer_apply)
+    /// Registered ActionCommand ID (e.g. bulk_file_time_apply)
     #[arg(long)]
     pub id: String,
     /// JSON object of arguments for the action
@@ -487,7 +486,7 @@ pub struct ExportBundleArgs {
 
 fn build_table_query(cli: &Cli, provider: &dyn TableProvider) -> Result<TableQuery> {
     let schema = provider.schema();
-    let mut gq = GetNirQuery::new();
+    let mut gq = GuapQuery::new();
     if let Some(ref f) = cli.filter {
         gq.filter_expr = Some(f.clone());
     }
@@ -497,7 +496,7 @@ fn build_table_query(cli: &Cli, provider: &dyn TableProvider) -> Result<TableQue
         } else {
             s.clone()
         };
-        gq.sort = GetNirQuery::parse_sort(&normalized).map_err(|e| anyhow::anyhow!("{e}"))?;
+        gq.sort = GuapQuery::parse_sort(&normalized).map_err(|e| anyhow::anyhow!("{e}"))?;
     }
     gq.limit = cli.limit;
     gq.to_table_query(&schema).map_err(|e| anyhow::anyhow!("{e}"))
@@ -631,7 +630,7 @@ fn run_search(cli: &Cli, sub: &SearchSub) -> Result<()> {
     match sub {
         SearchSub::Files(args) => {
             if cli.offline && args.roots.is_empty() {
-                let p = find_synthetic_provider("search_my_files")?;
+                let p = find_synthetic_provider("search_files")?;
                 return emit_provider_output(cli, p.as_ref());
             }
             let roots = if args.roots.is_empty() {
@@ -639,15 +638,15 @@ fn run_search(cli: &Cli, sub: &SearchSub) -> Result<()> {
             } else {
                 args.roots.clone()
             };
-            let cfg = SearchMyFilesConfig {
+            let cfg = SearchFilesConfig {
                 roots,
                 include_patterns: args.patterns.clone(),
                 max_depth: args.max_depth,
                 compute_sha256: args.sha256 || args.duplicates,
                 group_duplicates: args.duplicates,
-                ..SearchMyFilesConfig::default()
+                ..SearchFilesConfig::default()
             };
-            let p = SearchMyFilesProvider::new(cfg);
+            let p = SearchFilesProvider::new(cfg);
             emit_provider_output(cli, &p)
         }
         SearchSub::BulkTime(args) => {
@@ -662,10 +661,10 @@ fn run_search(cli: &Cli, sub: &SearchSub) -> Result<()> {
                 if let Some(ref c) = args.created {
                     payload["created"] = json!(c);
                 }
-                return dispatch_gated_action(cli, wiring_for_action(), "bulk_file_changer_apply", payload);
+                return dispatch_gated_action(cli, wiring_for_action(), "bulk_file_time_apply", payload);
             }
             if cli.offline && args.targets.is_empty() {
-                let p = find_synthetic_provider("bulk_file_changer")?;
+                let p = find_synthetic_provider("bulk_file_time")?;
                 return emit_provider_output(cli, p.as_ref());
             }
             let modified = match &args.modified {
@@ -691,7 +690,7 @@ fn run_search(cli: &Cli, sub: &SearchSub) -> Result<()> {
                 modified,
                 ..BulkChangeSpec::default()
             };
-            let p = BulkFileChangerPreviewProvider::new(spec, os_fs);
+            let p = BulkFileTimePreviewProvider::new(spec, os_fs);
             emit_provider_output(cli, &p)
         }
         SearchSub::FolderTime(args) => {
@@ -744,38 +743,38 @@ fn run_search(cli: &Cli, sub: &SearchSub) -> Result<()> {
                     "shortcut_path": sc.to_string_lossy(),
                     "new_target": nt,
                 });
-                return dispatch_gated_action(cli, wiring_for_action(), "shortcuts_man_fix_target", payload);
+                return dispatch_gated_action(cli, wiring_for_action(), "shortcuts_fix_target", payload);
             }
             if !args.delete_paths.is_empty() {
                 let payload = json!({
                     "shortcut_paths": args.delete_paths.iter().map(|p| p.to_string_lossy().into_owned()).collect::<Vec<_>>(),
                     "only_if_broken": args.only_if_broken,
                 });
-                return dispatch_gated_action(cli, wiring_for_action(), "shortcuts_man_delete", payload);
+                return dispatch_gated_action(cli, wiring_for_action(), "shortcuts_delete", payload);
             }
             if cli.offline && args.roots.is_empty() {
-                let p = find_synthetic_provider("shortcuts_man")?;
+                let p = find_synthetic_provider("shortcuts_view")?;
                 return emit_provider_output(cli, p.as_ref());
             }
-            let cfg = ShortcutsManConfig {
+            let cfg = ShortcutsConfig {
                 scan_roots: args.roots.clone(),
-                ..ShortcutsManConfig::default()
+                ..ShortcutsConfig::default()
             };
-            let p = ShortcutsManProvider::with_backend(cfg, os_fs);
+            let p = ShortcutsProvider::with_backend(cfg, os_fs);
             emit_provider_output(cli, &p)
         }
         SearchSub::Hash(args) => {
             if cli.offline && args.targets.is_empty() {
-                let p = find_synthetic_provider("hash_my_files")?;
+                let p = find_synthetic_provider("hash_files")?;
                 return emit_provider_output(cli, p.as_ref());
             }
-            let cfg = HashMyFilesConfig {
+            let cfg = HashFilesConfig {
                 targets: args.targets.clone(),
                 include_patterns: args.patterns.clone(),
                 max_depth: args.max_depth,
-                ..HashMyFilesConfig::default()
+                ..HashFilesConfig::default()
             };
-            let p = HashMyFilesProvider::new(cfg);
+            let p = HashFilesProvider::new(cfg);
             emit_provider_output(cli, &p)
         }
     }
@@ -1011,12 +1010,12 @@ fn run_data(cli: &Cli, sub: &DataSub) -> Result<()> {
             let p = TableCompareProvider::compare(to_input(left), to_input(right), opts)?;
             emit_provider_output(cli, &p)
         }
-        DataSub::Getnir(args) => {
+        DataSub::Query(args) => {
             let Some(ref path) = args.path else {
-                let p = find_synthetic_provider("fs2rust.data.getnir")?;
+                let p = find_synthetic_provider("fs2rust.data.query")?;
                 return emit_provider_output(cli, p.as_ref());
             };
-            let req = GetNirRequest {
+            let req = TabularQueryRequest {
                 columns: args.columns.as_ref().map(|c| {
                     c.split(',')
                         .map(|s| s.trim().to_string())
@@ -1026,9 +1025,9 @@ fn run_data(cli: &Cli, sub: &DataSub) -> Result<()> {
                 where_expr: args.where_expr.clone(),
                 sort: args.sort_expr.clone(),
                 top: args.top,
-                ..GetNirRequest::default()
+                ..TabularQueryRequest::default()
             };
-            let p = GetNirTableProvider::from_source(GetNirSource::AutoFile(path.clone()), &req)?;
+            let p = TabularQueryProvider::from_source(TabularQuerySource::AutoFile(path.clone()), &req)?;
             emit_provider_output(cli, &p)
         }
         DataSub::Exif(args) => {

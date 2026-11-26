@@ -13,7 +13,7 @@ Ready-to-submit **WinGet** & **Homebrew** manifests live in [`packaging/`](packa
 **`fs2rust`** is a 100% pure-Rust 24-tool filesystem search, NTFS/USN/ATA SMART telemetry, and structured CSV/EXIF/HTML/vCard data suite built on [`guap-kit`](https://github.com/adpaolucci/guap-kit):
 1. **`fs2rust-win32`** (**WinSafe `0.0.29`**) — Native zero-GPU Win32 virtual list console (`LVS_OWNERDATA`, ComCtl v6, Per-Monitor DPI v2).
 2. **`fs2rust-iced`** (**Iced `0.14`**) — Cross-platform GUI (`wgpu` + `tiny-skia` CPU fallback).
-3. **`fs2rust`** — Unified `clap 4.6` CLI (`search`, `ntfs`, `data`, `mcp`, `gui`, `action`, `list`, `export`, `diag`) with `--offline` fixtures, `GetNir` filtering, `--dry-run`, and Merkle custody exports.
+3. **`fs2rust`** — Unified `clap 4.6` CLI (`search`, `ntfs`, `data`, `mcp`, `gui`, `action`, `list`, `export`, `diag`) with `--offline` fixtures, `GuapQuery` filtering, `--dry-run`, and Merkle custody exports.
 4. **`fs2rust-mcp`** — Policy-gated JSON-RPC 2.0 (`2024-11-05`) `stdio` MCP server exposing **32 tools** (**24** read-only `TableProvider`s + **8** mutating `ActionCommand`s).
 
 ---
@@ -24,7 +24,7 @@ Ready-to-submit **WinGet** & **Homebrew** manifests live in [`packaging/`](packa
 |---|---|---|---|
 | **Unified Coverage** | **24 tools across `search` (6), `ntfs` (11), and `data` (7)** | 24 standalone GUIs | Fragile script pipelines |
 | **Pure-Rust Binary Parsers** | **`$UsnJrnl` `USN_RECORD_V2`/`V3`, ATA SMART 512B + NVMe, JPEG/TIFF EXIF, `[MS-SHLLINK]`, HTML, VCF/LDIF** | Mixed closed-source parsers | Missing binary decoders |
-| **Single-Pass Multi-Hash** | **MD5, SHA-1, SHA-256, SHA-512, and CRC32 in one I/O pass (`hash_my_files`)** | Separate passes per tool | High disk I/O overhead |
+| **Single-Pass Multi-Hash** | **MD5, SHA-1, SHA-256, SHA-512, and CRC32 in one I/O pass (`hash_files`)** | Separate passes per tool | High disk I/O overhead |
 | **CSV Formula & Custody Safety** | **RFC-4180 formula neutralization + SHA-256/512 Merkle `CustodyManifest`** | Unneutralized CSV cells | No chain of custody |
 | **Mutation & Policy Safety** | **`--dry-run` + `ReadOnlyOnly` `-32003` gate before bulk timestamp, `.lnk`, ADS, or drive-letter changes** | Direct file/volume edits | Manual confirmation |
 
@@ -43,7 +43,7 @@ fs2rust/
     ├── fs2rust-core/           # `#![forbid(unsafe_code)]` FileSystemOps trait (OS/Mock), PolicyContext, wildcards, FILETIME
     ├── fs2rust-search/         # `#![forbid(unsafe_code)]` 6 search, bulk time, folder report, [MS-SHLLINK], & hash tools + 4 actions
     ├── fs2rust-ntfs/           # 11 NTFS drives, disk counters, ETW file/error watch, SMART, ADS, links, props & USN tools + 4 actions
-    ├── fs2rust-data/           # `#![forbid(unsafe_code)]` 7 CSV, TableTextCompare diff, GetNir, EXIF, codegen, HTML2Text & AddrView tools
+    ├── fs2rust-data/           # `#![forbid(unsafe_code)]` 7 CSV, table diff, query, EXIF, codegen, HTML2Text & contact tools
     ├── fs2rust-report/         # guap-export integration (7 formats) + SHA-256/512 Merkle CustodyManifest
     ├── fs2rust-mcp/            # Policy-gated MCP JSON-RPC 2.0 stdio server (`fs2rust-mcp`, 32 endpoints)
     ├── fs2rust-cli/            # Unified CLI (`fs2rust`)
@@ -56,40 +56,40 @@ fs2rust/
 ## 24-Tool Matrix & 32 MCP Endpoints
 
 ### `fs2rust-search` (6 `#![forbid(unsafe_code)]` Tools + 4 Mutating Actions)
-| CLI Subcommand | NirSoft Equivalent | Mechanism | MCP Policy |
+| CLI Subcommand | Diagnostic Scope | Mechanism | MCP Policy |
 |---|---|---|---|
-| `search files` | `SearchMyFiles` | Parallel wildcard/regex search & duplicate grouping | `search_my_files` |
-| `search bulk-time` | `BulkFileChanger` | Inspect/modify MACB timestamps & DOS attributes | `bulk_file_changer` + `bulk_file_changer_apply` `[MUT]` |
-| `search folder-time` | `FolderTimeUpdate` | Bottom-up folder timestamp computation | `folder_time_update` + `folder_time_update_apply` `[MUT]` |
-| `search report` | `FoldersReport` | Logical size, size-on-disk & file-count aggregator | `folders_report` |
-| `search shortcuts` | `ShortcutsMan` | `[MS-SHLLINK]` `.lnk` parser & broken target validator | `shortcuts_man` + `shortcuts_man_fix_target`/`delete` `[MUT]` |
-| `search hash` | `HashMyFiles` | Single-pass MD5, SHA-1, SHA-256, SHA-512 & CRC32 | `hash_my_files` |
+| `search files` | File & Content Search | Parallel wildcard/regex search & duplicate grouping | `search_files` |
+| `search bulk-time` | Bulk Timestamp & Attributes | Inspect/modify MACB timestamps & DOS attributes | `bulk_file_time` + `bulk_file_time_apply` `[MUT]` |
+| `search folder-time` | Folder Timestamp Update | Bottom-up folder timestamp computation | `folder_time_update` + `folder_time_update_apply` `[MUT]` |
+| `search report` | Subtree Size Report | Logical size, size-on-disk & file-count aggregator | `folders_report` |
+| `search shortcuts` | Shortcut Inspector | `[MS-SHLLINK]` `.lnk` parser & broken target validator | `shortcuts_view` + `shortcuts_fix_target`/`shortcuts_delete` `[MUT]` |
+| `search hash` | Multi-Algorithm Hasher | Single-pass MD5, SHA-1, SHA-256, SHA-512 & CRC32 | `hash_files` |
 
 ### `fs2rust-ntfs` (11 Tools + 4 Mutating Actions)
-| CLI Subcommand | NirSoft Equivalent | Mechanism / OS API | MCP Policy |
+| CLI Subcommand | Diagnostic Scope | Mechanism / OS API | MCP Policy |
 |---|---|---|---|
-| `ntfs drives` | `DriveLetterView` | Logical drives, volume GUIDs & `MountedDevices` | `drive_letter_view` + `drive_letter_assign`/`remove` `[MUT]` |
-| `ntfs counters` | `DiskCountersView` | `IOCTL_DISK_PERFORMANCE` counters & queue depth | `disk_counters_view` |
-| `ntfs file-watch` | `FileActivityWatch` | ETW `Microsoft-Windows-Kernel-File` monitor | `file_activity_watch` |
-| `ntfs folder-watch` | `FolderChangesView` | `ReadDirectoryChangesW` live change stream | `folder_changes_view` |
-| `ntfs access-err` | `FileAccessErrorView` | ETW Kernel-File non-zero `NTSTATUS` failures | `file_access_error_view` |
-| `ntfs app-io` | `AppReadWriteCounter` | Per-process `GetProcessIoCounters` I/O throughput | `app_read_write_counter` |
-| `ntfs smart` | `DiskSmartView` | ATA S.M.A.R.T. 512B checksum & NVMe health log | `disk_smart_view` |
-| `ntfs ads` | `AlternateStreamView` | NTFS ADS (`FindFirstStreamW` / `$MFT`) | `alternate_stream_view` + `alternate_stream_delete` `[MUT]` |
-| `ntfs links` | `NTFSLinksView` | Symlinks, junctions, reparse points & hardlinks | `ntfs_links_view` |
-| `ntfs props` | `PropertySystemView` | Windows Property System (`IPropertyStore`) | `property_system_view` + `property_system_set` `[MUT]` |
+| `ntfs drives` | Logical Drives & Mounts | Logical drives, volume GUIDs & `MountedDevices` | `drive_letter_view` + `drive_letter_assign`/`remove` `[MUT]` |
+| `ntfs counters` | Disk Performance Counters | `IOCTL_DISK_PERFORMANCE` counters & queue depth | `disk_counters_view` |
+| `ntfs file-watch` | File Activity Monitor | ETW `Microsoft-Windows-Kernel-File` monitor | `file_activity_watch` |
+| `ntfs folder-watch` | Folder Change Monitor | `ReadDirectoryChangesW` live change stream | `folder_changes_view` |
+| `ntfs access-err` | File Access Errors | ETW Kernel-File non-zero `NTSTATUS` failures | `file_access_error_view` |
+| `ntfs app-io` | Process I/O Counters | Per-process `GetProcessIoCounters` I/O throughput | `app_read_write_counter` |
+| `ntfs smart` | ATA / NVMe S.M.A.R.T. | ATA S.M.A.R.T. 512B checksum & NVMe health log | `disk_smart_view` |
+| `ntfs ads` | Alternate Data Streams | NTFS ADS (`FindFirstStreamW` / `$MFT`) | `alternate_stream_view` + `alternate_stream_delete` `[MUT]` |
+| `ntfs links` | NTFS Links & Reparse | Symlinks, junctions, reparse points & hardlinks | `ntfs_links_view` |
+| `ntfs props` | Shell Property System | Windows Property System (`IPropertyStore`) | `property_system_view` + `property_system_set` `[MUT]` |
 | `ntfs usn` | *NTFS USN Journal* | Pure-Rust `$UsnJrnl:$J` `USN_RECORD_V2`/`V3` decoder | `usn_journal_view` |
 
 ### `fs2rust-data` (7 `#![forbid(unsafe_code)]` Read-Only Tools)
-| CLI Subcommand | NirSoft Equivalent | Capabilities | MCP Tool ID |
+| CLI Subcommand | Diagnostic Scope | Capabilities | MCP Tool ID |
 |---|---|---|---|
-| `data csv` | `CSVFileView` | Auto-delimiter & typed CSV/TSV viewer | `fs2rust.data.csv_file_view` |
-| `data diff` | `TableTextCompare` | Row-keyed CSV/TSV/JSONL table comparison | `fs2rust.data.table_text_compare` |
-| `data getnir` | `GetNir` | Tabular boolean/regex filter expression query evaluator | `fs2rust.data.getnir` |
-| `data exif` | `ExifDataView` | Pure-Rust JPEG APP1/TIFF IFD0/ExifIFD/GPS parser | `fs2rust.data.exif_data_view` |
-| `data codegen` | `SimpleCodeGenerator` | Template snippet generator from CSV/JSON rows | `fs2rust.data.simple_code_generator` |
-| `data html2text` | `HTMLAsText` | Pure-Rust HTML-to-plaintext & link footnote extractor | `fs2rust.data.html_as_text` |
-| `data addr` | `AddrView` | Pure-Rust `.vcf` vCard, `.ldif` & contact `.csv` reader | `fs2rust.data.addr_view` |
+| `data csv` | CSV / TSV Viewer | Auto-delimiter & typed CSV/TSV viewer | `fs2rust.data.csv_file_view` |
+| `data diff` | Table Diff | Row-keyed CSV/TSV/JSONL table comparison | `fs2rust.data.table_text_compare` |
+| `data query` | Tabular Query Evaluator | Tabular boolean/regex filter expression query evaluator | `fs2rust.data.query` |
+| `data exif` | EXIF Metadata Viewer | Pure-Rust JPEG APP1/TIFF IFD0/ExifIFD/GPS parser | `fs2rust.data.exif_data_view` |
+| `data codegen` | Template Code Generator | Template snippet generator from CSV/JSON rows | `fs2rust.data.simple_code_generator` |
+| `data html2text` | HTML-to-Text Extractor | Pure-Rust HTML-to-plaintext & link footnote extractor | `fs2rust.data.html_as_text` |
+| `data addr` | Contact Book Reader | Pure-Rust `.vcf` vCard, `.ldif` & contact `.csv` reader | `fs2rust.data.addr_view` |
 
 ---
 

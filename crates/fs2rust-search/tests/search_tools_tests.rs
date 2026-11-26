@@ -1,21 +1,21 @@
 use chrono::{TimeZone, Utc};
 use fs2rust_core::{FileAttributes, FileSystemOps, FileTimestamps, MockFileSystem, OsFileSystem, PolicyContext};
-use fs2rust_search::bulk_file_changer::{
-    BulkChangeSpec, BulkFileChangerAction, BulkFileChangerPreviewProvider, TimestampChange,
+use fs2rust_search::bulk_file_time::{
+    BulkChangeSpec, BulkFileTimeAction, BulkFileTimePreviewProvider, TimestampChange,
 };
 use fs2rust_search::folder_time_update::{
     FolderTimeSource, FolderTimeUpdateAction, FolderTimeUpdateConfig, FolderTimeUpdatePreviewProvider,
 };
 use fs2rust_search::folders_report::{FoldersReportConfig, FoldersReportProvider};
-use fs2rust_search::hash_my_files::{HashAlgorithmSet, HashMyFilesConfig, HashMyFilesProvider};
+use fs2rust_search::hash_files::{HashAlgorithmSet, HashFilesConfig, HashFilesProvider};
 use fs2rust_search::register_search_tools_with_backend;
-use fs2rust_search::search_my_files::{
-    ContentSearchMode, SearchMyFilesConfig, SearchMyFilesProvider, parse_hex_pattern,
+use fs2rust_search::search_files::{
+    ContentSearchMode, SearchFilesConfig, SearchFilesProvider, parse_hex_pattern,
 };
-use fs2rust_search::shortcuts_man::{
+use fs2rust_search::shortcuts::{
     ExtraDataBlock, LinkInfo, LinkTargetIdList, SHELL_LINK_CLSID, SHELL_LINK_HEADER_SIZE, ShellLinkFile,
-    ShellLinkHeader, ShortcutsManConfig, ShortcutsManDeleteAction, ShortcutsManFixAction, ShortcutsManProvider,
-    ShowCommand, StringData, extra_sig, link_flags,
+    ShellLinkHeader, ShortcutsConfig, ShortcutsDeleteAction, ShortcutsFixAction, ShortcutsProvider, ShowCommand,
+    StringData, extra_sig, link_flags,
 };
 use guap_mcp::{ActionCommand, JsonRpcError, McpServerRegistry, McpToolError, PolicyMode};
 use guap_table::{CellValue, TableProvider, TableQuery};
@@ -25,7 +25,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 #[test]
-fn search_my_files_cross_chunk_binary_grep_and_duplicates() {
+fn search_files_cross_chunk_binary_grep_and_duplicates() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
 
@@ -44,14 +44,14 @@ fn search_my_files_cross_chunk_binary_grep_and_duplicates() {
     std::fs::write(root.join("other.bin"), b"no magic bytes here").unwrap();
 
     let hex_needle = parse_hex_pattern("DE AD BE EF").unwrap();
-    let provider = SearchMyFilesProvider::new(SearchMyFilesConfig {
+    let provider = SearchFilesProvider::new(SearchFilesConfig {
         roots: vec![root.to_path_buf()],
         include_patterns: vec!["*.bin".to_string()],
         exclude_dirs: vec!["node_modules".to_string()],
         content_filter: Some(ContentSearchMode::BinaryHex(hex_needle)),
         compute_sha256: true,
         threads: 2,
-        ..SearchMyFilesConfig::default()
+        ..SearchFilesConfig::default()
     });
 
     let data = provider.query(&TableQuery::default()).unwrap();
@@ -74,14 +74,14 @@ fn search_my_files_cross_chunk_binary_grep_and_duplicates() {
     std::fs::write(dup_dir.join("b.txt"), b"Hello Forensic World 123").unwrap();
     std::fs::write(dup_dir.join("c.txt"), b"Unique forensic note").unwrap();
 
-    let dup_provider = SearchMyFilesProvider::new(SearchMyFilesConfig {
+    let dup_provider = SearchFilesProvider::new(SearchFilesConfig {
         roots: vec![dup_dir],
         content_filter: Some(ContentSearchMode::PlainText {
             needle: "FORENSIC".to_string(),
             case_sensitive: false,
         }),
         group_duplicates: true,
-        ..SearchMyFilesConfig::default()
+        ..SearchFilesConfig::default()
     });
     let dup_data = dup_provider.query(&TableQuery::default()).unwrap();
     assert_eq!(dup_data.total_rows, 3);
@@ -89,16 +89,16 @@ fn search_my_files_cross_chunk_binary_grep_and_duplicates() {
     assert_eq!(dup_data.rows[1].cells[10], CellValue::Uint(1));
     assert_eq!(dup_data.rows[2].cells[10], CellValue::Null);
 
-    let re_provider = SearchMyFilesProvider::new(SearchMyFilesConfig {
+    let re_provider = SearchFilesProvider::new(SearchFilesConfig {
         roots: vec![root.join("dups")],
         content_filter: Some(ContentSearchMode::Regex(r"World \d{3}".to_string())),
-        ..SearchMyFilesConfig::default()
+        ..SearchFilesConfig::default()
     });
     assert_eq!(re_provider.query(&TableQuery::default()).unwrap().total_rows, 2);
 }
 
 #[test]
-fn bulk_file_changer_mock_readonly_ordering_and_live_windows() {
+fn bulk_file_time_mock_readonly_ordering_and_live_windows() {
     let mock = Arc::new(MockFileSystem::new());
     let file_path = Path::new("C:\\mock\\locked.txt");
     let t0 = Utc.with_ymd_and_hms(2024, 3, 1, 10, 0, 0).unwrap();
@@ -115,7 +115,7 @@ fn bulk_file_changer_mock_readonly_ordering_and_live_windows() {
         FileAttributes::from_raw(FileAttributes::READONLY | FileAttributes::ARCHIVE),
     );
 
-    let preview = BulkFileChangerPreviewProvider::new(
+    let preview = BulkFileTimePreviewProvider::new(
         BulkChangeSpec {
             targets: vec![file_path.to_path_buf()],
             recursive: false,
@@ -135,7 +135,7 @@ fn bulk_file_changer_mock_readonly_ordering_and_live_windows() {
     assert_eq!(mock.metadata(file_path).unwrap().timestamps.modified, Some(t0));
 
     // Apply via ActionCommand (ReadOnly cleared before SetFileTime, Hidden applied)
-    let action = BulkFileChangerAction::new(mock.clone());
+    let action = BulkFileTimeAction::new(mock.clone());
     let res = action
         .execute(
             &json!({
@@ -159,7 +159,7 @@ fn bulk_file_changer_mock_readonly_ordering_and_live_windows() {
     let real_file = tmp.path().join("live_bulk.txt");
     std::fs::write(&real_file, b"live test").unwrap();
     let os_fs: Arc<dyn FileSystemOps> = Arc::new(OsFileSystem);
-    let live_action = BulkFileChangerAction::new(os_fs.clone());
+    let live_action = BulkFileTimeAction::new(os_fs.clone());
     let live_res = live_action
         .execute(
             &json!({
@@ -200,17 +200,17 @@ fn mcp_registry_policy_gate_enforces_32003_on_mutating_search_actions() {
     register_search_tools_with_backend(
         &mut reg,
         mock.clone(),
-        SearchMyFilesConfig::default(),
+        SearchFilesConfig::default(),
         BulkChangeSpec::default(),
         FolderTimeUpdateConfig::default(),
         FoldersReportConfig::default(),
-        ShortcutsManConfig::default(),
-        HashMyFilesConfig::default(),
+        ShortcutsConfig::default(),
+        HashFilesConfig::default(),
     );
 
     let err = reg
         .dispatch(
-            "bulk_file_changer_apply",
+            "bulk_file_time_apply",
             &json!({
                 "targets": ["C:\\mock\\gate.txt"],
                 "modified": "2025-01-01T00:00:00Z",
@@ -223,7 +223,7 @@ fn mcp_registry_policy_gate_enforces_32003_on_mutating_search_actions() {
     reg.set_policy(PolicyMode::AllowMutating);
     let err2 = reg
         .dispatch(
-            "bulk_file_changer_apply",
+            "bulk_file_time_apply",
             &json!({
                 "targets": ["C:\\mock\\gate.txt"],
                 "modified": "2025-01-01T00:00:00Z"
@@ -234,7 +234,7 @@ fn mcp_registry_policy_gate_enforces_32003_on_mutating_search_actions() {
 
     let ok = reg
         .dispatch(
-            "bulk_file_changer_apply",
+            "bulk_file_time_apply",
             &json!({
                 "targets": ["C:\\mock\\gate.txt"],
                 "modified": "2025-01-01T00:00:00Z",
@@ -461,7 +461,7 @@ fn build_synthetic_ansi_lnk(local_path: &str, name: &str, args: &str) -> Vec<u8>
 }
 
 #[test]
-fn shortcuts_man_parses_unicode_ansi_env_darwin_and_fixes_broken_lnk() {
+fn shortcuts_view_parses_unicode_ansi_env_darwin_and_fixes_broken_lnk() {
     let tmp = tempfile::tempdir().unwrap();
     let real_target = tmp.path().join("real_app.exe");
     std::fs::write(&real_target, b"MZ").unwrap();
@@ -552,9 +552,9 @@ fn shortcuts_man_parses_unicode_ansi_env_darwin_and_fixes_broken_lnk() {
     let _ = extra_sig::DARWIN;
 
     // Provider detects broken target
-    let provider = ShortcutsManProvider::new(ShortcutsManConfig {
+    let provider = ShortcutsProvider::new(ShortcutsConfig {
         scan_roots: vec![tmp.path().to_path_buf()],
-        ..ShortcutsManConfig::default()
+        ..ShortcutsConfig::default()
     });
     let table = provider.query(&TableQuery::default()).unwrap();
     assert_eq!(table.total_rows, 1);
@@ -564,7 +564,7 @@ fn shortcuts_man_parses_unicode_ansi_env_darwin_and_fixes_broken_lnk() {
 
     // Fix action (dry-run then apply)
     let os_fs: Arc<dyn FileSystemOps> = Arc::new(OsFileSystem);
-    let fix = ShortcutsManFixAction::new(os_fs.clone());
+    let fix = ShortcutsFixAction::new(os_fs.clone());
     let dry = fix
         .execute(
             &json!({
@@ -594,7 +594,7 @@ fn shortcuts_man_parses_unicode_ansi_env_darwin_and_fixes_broken_lnk() {
     );
 
     // Delete action with only_if_broken = true refuses valid shortcut
-    let del = ShortcutsManDeleteAction::new(os_fs);
+    let del = ShortcutsDeleteAction::new(os_fs);
     let skip_res = del
         .execute(
             &json!({
@@ -623,7 +623,7 @@ fn shortcuts_man_parses_unicode_ansi_env_darwin_and_fixes_broken_lnk() {
 }
 
 #[test]
-fn hash_my_files_matches_rfc_nist_vectors_and_groups_identical() {
+fn hash_files_matches_rfc_nist_vectors_and_groups_identical() {
     let tmp = tempfile::tempdir().unwrap();
     let empty_f = tmp.path().join("01_empty.bin");
     let abc1_f = tmp.path().join("02_abc.txt");
@@ -635,11 +635,11 @@ fn hash_my_files_matches_rfc_nist_vectors_and_groups_identical() {
     std::fs::write(&abc2_f, b"abc").unwrap();
     std::fs::write(&big_f, vec![0x5Au8; 131_072]).unwrap();
 
-    let provider = HashMyFilesProvider::new(HashMyFilesConfig {
+    let provider = HashFilesProvider::new(HashFilesConfig {
         targets: vec![tmp.path().to_path_buf()],
         algorithms: HashAlgorithmSet::default(),
         threads: 2,
-        ..HashMyFilesConfig::default()
+        ..HashFilesConfig::default()
     });
     let data = provider.query(&TableQuery::default()).unwrap();
     assert_eq!(data.total_rows, 4);
@@ -706,7 +706,7 @@ fn mutating_actions_enforce_policy_context_allowed_roots() {
         ..PolicyContext::allow_mutating(false, true)
     };
 
-    let bulk = BulkFileChangerAction::new(mock.clone()).with_policy(policy.clone());
+    let bulk = BulkFileTimeAction::new(mock.clone()).with_policy(policy.clone());
     let err = bulk
         .execute(
             &json!({
@@ -724,7 +724,7 @@ fn mutating_actions_enforce_policy_context_allowed_roots() {
         .unwrap_err();
     assert!(matches!(err, McpToolError::PolicyDenied(_)));
 
-    let fix = ShortcutsManFixAction::new(mock.clone()).with_policy(policy.clone());
+    let fix = ShortcutsFixAction::new(mock.clone()).with_policy(policy.clone());
     let err = fix
         .execute(
             &json!({
@@ -736,7 +736,7 @@ fn mutating_actions_enforce_policy_context_allowed_roots() {
         .unwrap_err();
     assert!(matches!(err, McpToolError::PolicyDenied(_)));
 
-    let del = ShortcutsManDeleteAction::new(mock).with_policy(policy);
+    let del = ShortcutsDeleteAction::new(mock).with_policy(policy);
     let err = del
         .execute(
             &json!({
@@ -750,7 +750,7 @@ fn mutating_actions_enforce_policy_context_allowed_roots() {
 }
 
 #[test]
-fn shortcuts_man_mock_backend_fix_delete_unknown_and_net_unicode() {
+fn shortcuts_view_mock_backend_fix_delete_unknown_and_net_unicode() {
     let tmp = tempfile::tempdir().unwrap();
     let real_disk_only_target = tmp.path().join("only_on_host_disk.exe");
     std::fs::write(&real_disk_only_target, b"MZ").unwrap();
@@ -785,7 +785,7 @@ fn shortcuts_man_mock_backend_fix_delete_unknown_and_net_unicode() {
     );
 
     // FixAction writes strictly through MockFileSystem without touching host disk
-    let fix = ShortcutsManFixAction::new(mock.clone());
+    let fix = ShortcutsFixAction::new(mock.clone());
     let fix_res = fix
         .execute(
             &json!({
@@ -820,10 +820,10 @@ fn shortcuts_man_mock_backend_fix_delete_unknown_and_net_unicode() {
         FileAttributes::default(),
     );
 
-    let provider = ShortcutsManProvider::with_backend(
-        ShortcutsManConfig {
+    let provider = ShortcutsProvider::with_backend(
+        ShortcutsConfig {
             scan_roots: vec![mock_dir.to_path_buf()],
-            ..ShortcutsManConfig::default()
+            ..ShortcutsConfig::default()
         },
         mock.clone(),
     );
@@ -844,7 +844,7 @@ fn shortcuts_man_mock_backend_fix_delete_unknown_and_net_unicode() {
         FileAttributes::default(),
     );
 
-    let del = ShortcutsManDeleteAction::new(mock.clone());
+    let del = ShortcutsDeleteAction::new(mock.clone());
     let del_res = del
         .execute(
             &json!({
@@ -973,7 +973,7 @@ fn folder_time_update_newest_file_or_subdir_converges_in_one_pass() {
 }
 
 #[test]
-fn bulk_file_changer_shift_overflow_and_backend_error_propagation() {
+fn bulk_file_time_shift_overflow_and_backend_error_propagation() {
     let mock = Arc::new(MockFileSystem::new());
     let root = Path::new(r"C:\bfc_err");
     let locked_dir = Path::new(r"C:\bfc_err\denied");
@@ -988,7 +988,7 @@ fn bulk_file_changer_shift_overflow_and_backend_error_propagation() {
     mock.insert_file(file, b"ok".to_vec(), ts, FileAttributes::default());
     mock.deny_path(locked_dir, "simulated ACL denial");
 
-    let overflow_preview = BulkFileChangerPreviewProvider::new(
+    let overflow_preview = BulkFileTimePreviewProvider::new(
         BulkChangeSpec {
             targets: vec![file.to_path_buf()],
             recursive: false,
@@ -999,7 +999,7 @@ fn bulk_file_changer_shift_overflow_and_backend_error_propagation() {
     );
     assert!(overflow_preview.query(&TableQuery::default()).is_err());
 
-    let denied_preview = BulkFileChangerPreviewProvider::new(
+    let denied_preview = BulkFileTimePreviewProvider::new(
         BulkChangeSpec {
             targets: vec![root.to_path_buf()],
             recursive: true,
@@ -1180,7 +1180,7 @@ fn directory_junction_follow_symlinks_false_and_true_with_cycle_guard() {
         return;
     }
 
-    // 1. FoldersReport with follow_symlinks = false does NOT follow ext_link
+    // 1. FoldersReportProvider with follow_symlinks = false does NOT follow ext_link
     let rep_no_follow = FoldersReportProvider::new(
         FoldersReportConfig {
             root: root.clone(),
@@ -1202,7 +1202,7 @@ fn directory_junction_follow_symlinks_false_and_true_with_cycle_guard() {
     assert_eq!(rep_no_follow.rows.len(), 1);
     assert_eq!(rep_no_follow.rows[0].cells[4], CellValue::Bytes(100));
 
-    // 2. FoldersReport with follow_symlinks = true follows ext_link and breaks cycle at loop_to_root
+    // 2. FoldersReportProvider with follow_symlinks = true follows ext_link and breaks cycle at loop_to_root
     let rep_follow = FoldersReportProvider::new(
         FoldersReportConfig {
             root: root.clone(),
@@ -1223,7 +1223,7 @@ fn directory_junction_follow_symlinks_false_and_true_with_cycle_guard() {
     assert_eq!(ext_row.cells[2], CellValue::Uint(1)); // ext.bin only; loop_to_root guarded
     assert_eq!(ext_row.cells[4], CellValue::Bytes(400));
 
-    // 3. FolderTimeUpdate with follow_symlinks = false ignores ext_link (neither recurses nor counts it as a file)
+    // 3. FolderTimeUpdatePreviewProvider with follow_symlinks = false ignores ext_link (neither recurses nor counts it as a file)
     let ftu_no_follow = FolderTimeUpdatePreviewProvider::new(
         FolderTimeUpdateConfig {
             root: root.clone(),
@@ -1241,7 +1241,7 @@ fn directory_junction_follow_symlinks_false_and_true_with_cycle_guard() {
         .unwrap();
     assert_eq!(root_row_nf.cells[4], CellValue::Uint(1)); // only local.bin
 
-    // 4. FolderTimeUpdate with follow_symlinks = true follows ext_link safely with cycle guard
+    // 4. FolderTimeUpdatePreviewProvider with follow_symlinks = true follows ext_link safely with cycle guard
     let ftu_follow = FolderTimeUpdatePreviewProvider::new(
         FolderTimeUpdateConfig {
             root: root.clone(),
@@ -1261,8 +1261,8 @@ fn directory_junction_follow_symlinks_false_and_true_with_cycle_guard() {
     assert_eq!(root_row_f.cells[4], CellValue::Uint(2)); // local.bin + ext.bin
     assert_eq!(root_row_f.cells[3], CellValue::Timestamp(t_ext_newer));
 
-    // 5. BulkFileChanger recursive preview must NOT follow junctions
-    let bulk_preview = BulkFileChangerPreviewProvider::new(
+    // 5. Bulk file time recursive preview must NOT follow junctions
+    let bulk_preview = BulkFileTimePreviewProvider::new(
         BulkChangeSpec {
             targets: vec![root.clone()],
             recursive: true,
@@ -1279,20 +1279,20 @@ fn directory_junction_follow_symlinks_false_and_true_with_cycle_guard() {
             .any(|r| r.cells[0].to_string().contains("ext.bin"))
     );
 
-    // 6. SearchMyFiles follow_symlinks = false vs true
-    let smf_no_follow = SearchMyFilesProvider::new(SearchMyFilesConfig {
+    // 6. SearchFiles follow_symlinks = false vs true
+    let smf_no_follow = SearchFilesProvider::new(SearchFilesConfig {
         roots: vec![root.clone()],
         follow_symlinks: false,
-        ..SearchMyFilesConfig::default()
+        ..SearchFilesConfig::default()
     })
     .query(&TableQuery::default())
     .unwrap();
     assert_eq!(smf_no_follow.total_rows, 1);
 
-    let smf_follow = SearchMyFilesProvider::new(SearchMyFilesConfig {
+    let smf_follow = SearchFilesProvider::new(SearchFilesConfig {
         roots: vec![root],
         follow_symlinks: true,
-        ..SearchMyFilesConfig::default()
+        ..SearchFilesConfig::default()
     })
     .query(&TableQuery::default())
     .unwrap();

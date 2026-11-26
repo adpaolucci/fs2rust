@@ -18,7 +18,7 @@ Description: >-
   search, bulk timestamp/attribute updates, folder reports, [MS-SHLLINK] .lnk analysis,
   streaming multi-hashing, drive letters, disk counters, ETW Kernel-File activity/errors,
   ATA/NVMe S.M.A.R.T., Alternate Data Streams, NTFS links, Property System, $UsnJrnl,
-  CSV/TSV viewing, table diffs, GetNir queries, pure-Rust EXIF, codegen, HTML-to-text,
+  CSV/TSV viewing, table diffs, tabular queries, pure-Rust EXIF, codegen, HTML-to-text,
   and vCard/LDIF contacts, with dual Win32 (WinSafe) & Iced 0.14 GUIs, 7-format exports
   with SHA-256/512 Merkle custody, and a read-only-default MCP JSON-RPC stdio server.
 Moniker: fs2rust

@@ -31,6 +31,6 @@ class Fs2rust < Formula
 
   test do
     assert_match "fs2rust", shell_output("#{bin}/fs2rust --help")
-    assert_match "search_my_files", shell_output("#{bin}/fs2rust mcp --tools --offline")
+    assert_match "search_files", shell_output("#{bin}/fs2rust mcp --tools --offline")
   end
 end

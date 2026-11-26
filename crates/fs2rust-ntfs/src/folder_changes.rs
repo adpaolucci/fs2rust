@@ -301,7 +301,7 @@ impl Default for FolderChangesConfig {
 pub fn folder_changes_schema() -> TableSchema {
     TableSchema::new(
         "folder_changes_view",
-        "FolderChangesView - Directory Change Monitor & Snapshot Diff",
+        "Directory Change Monitor & Snapshot Diff",
         vec![
             ColumnDef::new("timestamp", "Timestamp", ColumnType::Timestamp).with_width_hint(180),
             ColumnDef::new("action", "Action", ColumnType::Text).with_width_hint(105),

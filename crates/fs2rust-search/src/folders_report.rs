@@ -10,7 +10,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-/// Configuration for `FoldersReport`.
+/// Configuration for subtree folder size reporting.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FoldersReportConfig {
     pub root: PathBuf,
@@ -60,7 +60,7 @@ impl FoldersReportProvider {
     pub fn schema_def() -> TableSchema {
         TableSchema::new(
             "folders_report",
-            "FoldersReport — Subtree Size & File Counts",
+            "Folders Report — Subtree Size & File Counts",
             vec![
                 ColumnDef::new("folder_name", "Folder Name", ColumnType::Text).with_width_hint(180),
                 ColumnDef::new("folder_path", "Folder Path", ColumnType::Text).with_width_hint(300),

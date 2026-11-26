@@ -17,17 +17,17 @@ build:
   crate: fs2rust-cli
 
 tools:
-  - name: search_my_files
+  - name: search_files
     description: "Multi-threaded recursive file search with wildcards, size/time/attribute filters, content grep, and SHA-256 duplicate grouping."
-  - name: bulk_file_changer
+  - name: bulk_file_time
     description: "Preview timestamp (Created/Modified/Accessed) and Windows attribute changes for files and folders."
   - name: folder_time_update
     description: "Preview bottom-up folder timestamp propagation based on newest child files or subfolders."
   - name: folders_report
     description: "Aggregate directory file counts, subfolder counts, logical sizes, and allocated size-on-disk."
-  - name: shortcuts_man
+  - name: shortcuts_view
     description: "Pure-Rust [MS-SHLLINK] .lnk shortcut parser and broken target detector."
-  - name: hash_my_files
+  - name: hash_files
     description: "Single-pass streaming MD5, SHA-1, SHA-256, SHA-512, and CRC32 file hasher with duplicate grouping."
   - name: drive_letter_view
     description: "Inspect logical drive letters, volume GUIDs, filesystems, capacities, and MountedDevices mappings."
@@ -55,8 +55,8 @@ tools:
     description: "Dynamic CSV/TSV viewer with auto-delimiter, encoding detection, and typed column inference."
   - name: fs2rust.data.table_text_compare
     description: "Compare two CSV/TSV/JSONL/TableData inputs by key columns or row position."
-  - name: fs2rust.data.getnir
-    description: "Evaluate NirSoft-style tabular queries (columns, where, sort, top) and format outputs."
+  - name: fs2rust.data.query
+    description: "Evaluate tabular queries (columns, where, sort, top) and format outputs."
   - name: fs2rust.data.exif_data_view
     description: "Pure-Rust JPEG APP1 and TIFF IFD0/Exif/GPS/Interop/IFD1 EXIF metadata parser."
   - name: fs2rust.data.simple_code_generator

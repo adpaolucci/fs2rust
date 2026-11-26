@@ -3,12 +3,12 @@ use crate::csv_view::{CsvTableProvider, CsvViewOptions};
 use crate::encoding::decode_bytes;
 use crate::error::DataError;
 use guap_export::{ExportFormat, ExportOptions, export_table};
-use guap_table::{GetNirQuery, TableData, TableError, TableProvider, TableQuery, TableSchema, apply_query};
+use guap_table::{GuapQuery, TableData, TableError, TableProvider, TableQuery, TableSchema, apply_query};
 use std::path::PathBuf;
 use std::sync::Arc;
 
-/// Input source for `GetNir`.
-pub enum GetNirSource {
+/// Input source for tabular query evaluation.
+pub enum TabularQuerySource {
     StdinBytes(Vec<u8>),
     CsvFile(PathBuf),
     TsvFile(PathBuf),
@@ -18,41 +18,41 @@ pub enum GetNirSource {
     Table(TableData),
 }
 
-/// Output format produced by `GetNir`.
+/// Output format produced by tabular query evaluation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum GetNirOutputFormat {
+pub enum TabularQueryFormat {
     #[default]
     Table,
     Export(ExportFormat),
-    NirAlignedText,
+    AlignedText,
 }
 
-/// Query & output parameters for `GetNir`.
+/// Query & output parameters for [`evaluate_query`].
 #[derive(Debug, Clone, Default)]
-pub struct GetNirRequest {
+pub struct TabularQueryRequest {
     pub columns: Option<Vec<String>>,
     pub where_expr: Option<String>,
     pub sort: Option<String>,
     pub offset: usize,
     pub top: Option<usize>,
-    pub format: GetNirOutputFormat,
+    pub format: TabularQueryFormat,
 }
 
-/// Output produced by [`evaluate_getnir`].
+/// Output produced by [`evaluate_query`].
 #[derive(Debug, Clone)]
-pub struct GetNirEvaluation {
+pub struct TabularQueryEvaluation {
     pub table: TableData,
     pub formatted_bytes: Option<Vec<u8>>,
 }
 
-/// `TableProvider` wrapping a `GetNir` evaluation result.
-pub struct GetNirTableProvider {
+/// `TableProvider` wrapping a tabular query evaluation result.
+pub struct TabularQueryProvider {
     table: TableData,
 }
 
-impl GetNirTableProvider {
-    pub fn from_source(source: GetNirSource, req: &GetNirRequest) -> Result<Self, DataError> {
-        let eval = evaluate_getnir(source, req)?;
+impl TabularQueryProvider {
+    pub fn from_source(source: TabularQuerySource, req: &TabularQueryRequest) -> Result<Self, DataError> {
+        let eval = evaluate_query(source, req)?;
         Ok(Self { table: eval.table })
     }
 
@@ -61,18 +61,18 @@ impl GetNirTableProvider {
     }
 }
 
-impl TableProvider for GetNirTableProvider {
+impl TableProvider for TabularQueryProvider {
     fn tool_id(&self) -> &'static str {
-        "fs2rust.data.getnir"
+        "fs2rust.data.query"
     }
 
     fn description(&self) -> &'static str {
-        "Evaluate NirSoft-style tabular queries (columns, where, sort, top) and format outputs"
+        "Evaluate tabular queries (columns, where, sort, top) and format outputs"
     }
 
     fn schema(&self) -> TableSchema {
         let mut s = self.table.schema.clone();
-        s.tool_id = "fs2rust.data.getnir".to_string();
+        s.tool_id = "fs2rust.data.query".to_string();
         s
     }
 
@@ -86,14 +86,14 @@ impl TableProvider for GetNirTableProvider {
     }
 }
 
-/// Evaluate a [`GetNirRequest`] over any [`GetNirSource`].
-pub fn evaluate_getnir(source: GetNirSource, req: &GetNirRequest) -> Result<GetNirEvaluation, DataError> {
+/// Evaluate a [`TabularQueryRequest`] over any [`TabularQuerySource`].
+pub fn evaluate_query(source: TabularQuerySource, req: &TabularQueryRequest) -> Result<TabularQueryEvaluation, DataError> {
     let sort = match &req.sort {
-        Some(spec) if !spec.trim().is_empty() => GetNirQuery::parse_sort(spec)?,
+        Some(spec) if !spec.trim().is_empty() => GuapQuery::parse_sort(spec)?,
         _ => Vec::new(),
     };
 
-    let query = GetNirQuery {
+    let query = GuapQuery {
         columns: req.columns.clone(),
         filter_expr: req.where_expr.clone(),
         sort,
@@ -102,13 +102,13 @@ pub fn evaluate_getnir(source: GetNirSource, req: &GetNirRequest) -> Result<GetN
     };
 
     let table = match source {
-        GetNirSource::Provider(provider) => query.execute_provider(provider.as_ref())?,
-        GetNirSource::Table(td) => query.execute(&td)?,
-        GetNirSource::CsvFile(path) => {
+        TabularQuerySource::Provider(provider) => query.execute_provider(provider.as_ref())?,
+        TabularQuerySource::Table(td) => query.execute(&td)?,
+        TabularQuerySource::CsvFile(path) => {
             let td = CsvTableProvider::from_path(&path, CsvViewOptions::default())?.into_table_data();
             query.execute(&td)?
         }
-        GetNirSource::TsvFile(path) => {
+        TabularQuerySource::TsvFile(path) => {
             let td = CsvTableProvider::from_path(
                 &path,
                 CsvViewOptions {
@@ -119,16 +119,16 @@ pub fn evaluate_getnir(source: GetNirSource, req: &GetNirRequest) -> Result<GetN
             .into_table_data();
             query.execute(&td)?
         }
-        GetNirSource::JsonlFile(path) => {
+        TabularQuerySource::JsonlFile(path) => {
             let bytes = std::fs::read(&path)?;
             let td = load_jsonl_table(&bytes, &path.to_string_lossy())?;
             query.execute(&td)?
         }
-        GetNirSource::StdinBytes(bytes) => {
+        TabularQuerySource::StdinBytes(bytes) => {
             let td = auto_parse_bytes("stdin", &bytes)?;
             query.execute(&td)?
         }
-        GetNirSource::AutoFile(path) => {
+        TabularQuerySource::AutoFile(path) => {
             let bytes = std::fs::read(&path)?;
             let ext = path
                 .extension()
@@ -154,12 +154,12 @@ pub fn evaluate_getnir(source: GetNirSource, req: &GetNirRequest) -> Result<GetN
     };
 
     let formatted_bytes = match req.format {
-        GetNirOutputFormat::Table => None,
-        GetNirOutputFormat::Export(fmt) => Some(export_table(&table, fmt, &ExportOptions::default())?),
-        GetNirOutputFormat::NirAlignedText => Some(format_nir_aligned_text(&table).into_bytes()),
+        TabularQueryFormat::Table => None,
+        TabularQueryFormat::Export(fmt) => Some(export_table(&table, fmt, &ExportOptions::default())?),
+        TabularQueryFormat::AlignedText => Some(format_aligned_text(&table).into_bytes()),
     };
 
-    Ok(GetNirEvaluation { table, formatted_bytes })
+    Ok(TabularQueryEvaluation { table, formatted_bytes })
 }
 
 fn auto_parse_json_bytes(label: &str, bytes: &[u8]) -> Result<TableData, DataError> {
@@ -185,7 +185,7 @@ fn auto_parse_bytes(label: &str, bytes: &[u8]) -> Result<TableData, DataError> {
 }
 
 /// Format a `TableData` into padded fixed-width aligned console text.
-pub fn format_nir_aligned_text(table: &TableData) -> String {
+pub fn format_aligned_text(table: &TableData) -> String {
     if table.schema.columns.is_empty() {
         return String::new();
     }

@@ -238,7 +238,7 @@ pub struct PropertySystemConfig {
 pub fn property_system_schema() -> TableSchema {
     TableSchema::new(
         "property_system_view",
-        "PropertySystemView - Windows Shell Property Store (IPropertyStore / propsys.dll)",
+        "Windows Shell Property Store (IPropertyStore / propsys.dll)",
         vec![
             ColumnDef::new("file_path", "File Path", ColumnType::Text).with_width_hint(260),
             ColumnDef::new("canonical_name", "Canonical Name", ColumnType::Text).with_width_hint(210),

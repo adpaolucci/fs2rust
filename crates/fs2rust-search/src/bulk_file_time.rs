@@ -80,21 +80,21 @@ struct PlannedBulkChange {
     will_change: bool,
 }
 
-/// Read-only preview `TableProvider` for `BulkFileChanger`.
-pub struct BulkFileChangerPreviewProvider {
+/// Read-only preview `TableProvider` for bulk file timestamp & attribute changes.
+pub struct BulkFileTimePreviewProvider {
     spec: BulkChangeSpec,
     backend: Arc<dyn FileSystemOps>,
 }
 
-impl BulkFileChangerPreviewProvider {
+impl BulkFileTimePreviewProvider {
     pub fn new(spec: BulkChangeSpec, backend: Arc<dyn FileSystemOps>) -> Self {
         Self { spec, backend }
     }
 
     pub fn schema_def() -> TableSchema {
         TableSchema::new(
-            "bulk_file_changer",
-            "BulkFileChanger — Preview Timestamp & Attribute Changes",
+            "bulk_file_time",
+            "Bulk File Time — Preview Timestamp & Attribute Changes",
             vec![
                 ColumnDef::new("file_path", "File Path", ColumnType::Text).with_width_hint(280),
                 ColumnDef::new("old_created", "Old Created", ColumnType::Timestamp).with_width_hint(175),
@@ -173,9 +173,9 @@ fn collect_recursive(dir: &Path, backend: &dyn FileSystemOps, out: &mut Vec<File
     Ok(())
 }
 
-impl TableProvider for BulkFileChangerPreviewProvider {
+impl TableProvider for BulkFileTimePreviewProvider {
     fn tool_id(&self) -> &'static str {
-        "bulk_file_changer"
+        "bulk_file_time"
     }
 
     fn description(&self) -> &'static str {
@@ -227,13 +227,13 @@ impl TableProvider for BulkFileChangerPreviewProvider {
     }
 }
 
-/// Mutating `ActionCommand` applying `BulkFileChanger` timestamps & attributes.
-pub struct BulkFileChangerAction {
+/// Mutating `ActionCommand` applying bulk file timestamps & attributes.
+pub struct BulkFileTimeAction {
     backend: Arc<dyn FileSystemOps>,
     policy: PolicyContext,
 }
 
-impl BulkFileChangerAction {
+impl BulkFileTimeAction {
     pub fn new(backend: Arc<dyn FileSystemOps>) -> Self {
         Self {
             backend,
@@ -359,9 +359,9 @@ fn apply_single_plan(plan: &PlannedBulkChange, backend: &dyn FileSystemOps) -> R
     Ok(())
 }
 
-impl ActionCommand for BulkFileChangerAction {
+impl ActionCommand for BulkFileTimeAction {
     fn command_id(&self) -> &'static str {
-        "bulk_file_changer_apply"
+        "bulk_file_time_apply"
     }
 
     fn description(&self) -> &'static str {
@@ -423,7 +423,7 @@ impl ActionCommand for BulkFileChangerAction {
         };
 
         let plans =
-            BulkFileChangerPreviewProvider::plan_changes(&spec, self.backend.as_ref()).map_err(McpToolError::from)?;
+            BulkFileTimePreviewProvider::plan_changes(&spec, self.backend.as_ref()).map_err(McpToolError::from)?;
 
         for plan in &plans {
             self.policy.check_path_allowed(&plan.path).map_err(McpToolError::from)?;

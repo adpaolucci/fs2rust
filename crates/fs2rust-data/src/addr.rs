@@ -27,7 +27,7 @@ impl ContactFormat {
     }
 }
 
-/// Canonical normalized contact record parsed by `AddrView`.
+/// Canonical normalized contact record.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ContactRecord {
     pub source_path: String,
@@ -47,7 +47,7 @@ pub struct ContactRecord {
     pub extra: BTreeMap<String, String>,
 }
 
-/// `AddrView` contact book `TableProvider` reading `.vcf`, `.ldif`, and `.csv` contacts.
+/// Contact book `TableProvider` reading `.vcf`, `.ldif`, and `.csv` contacts.
 pub struct AddrViewProvider {
     records: Vec<ContactRecord>,
 }
@@ -89,7 +89,7 @@ impl AddrViewProvider {
     pub fn schema_def() -> TableSchema {
         TableSchema::new(
             "fs2rust.data.addr_view",
-            "AddrView — Address Book & Contacts",
+            "Address Book & Contacts",
             vec![
                 ColumnDef::new("full_name", "Full Name", ColumnType::Text).with_width_hint(180),
                 ColumnDef::new("email", "Email", ColumnType::Text).with_width_hint(220),
@@ -739,7 +739,7 @@ fn b64_val(b: u8) -> Result<u8, DataError> {
     }
 }
 
-/// Contact CSV parser mapping Outlook/Thunderbird/Google/NirSoft contact column aliases.
+/// Contact CSV parser mapping Outlook/Thunderbird/Google/desktop contact column aliases.
 pub fn parse_contact_csv(source_label: &str, bytes: &[u8]) -> Result<Vec<ContactRecord>, DataError> {
     let csv = CsvTableProvider::from_bytes(source_label, bytes, CsvViewOptions::default())?;
     let td = csv.into_table_data();

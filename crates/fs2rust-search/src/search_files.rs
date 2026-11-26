@@ -18,7 +18,7 @@ const CHUNK_SIZE: usize = 65_536;
 const MAX_REGEX_BYTES: u64 = 64 * 1024 * 1024;
 const SNIPPET_CAP: usize = 256;
 
-/// Content grep mode for `SearchMyFiles`.
+/// Content grep mode for file search.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ContentSearchMode {
     PlainText { needle: String, case_sensitive: bool },
@@ -42,9 +42,9 @@ pub fn parse_hex_pattern(spec: &str) -> Result<Vec<u8>, FsError> {
     hex::decode(&compact).map_err(|e| FsError::InvalidArgument(format!("invalid hex pattern: {e}")))
 }
 
-/// Configuration for `SearchMyFiles`.
+/// Configuration for file & content search.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SearchMyFilesConfig {
+pub struct SearchFilesConfig {
     pub roots: Vec<PathBuf>,
     pub include_patterns: Vec<String>,
     pub exclude_patterns: Vec<String>,
@@ -69,7 +69,7 @@ pub struct SearchMyFilesConfig {
     pub threads: usize,
 }
 
-impl Default for SearchMyFilesConfig {
+impl Default for SearchFilesConfig {
     fn default() -> Self {
         Self {
             roots: Vec::new(),
@@ -121,24 +121,24 @@ enum CompiledContent {
     BinaryHex(Vec<u8>),
 }
 
-/// Pure-Rust multi-threaded `SearchMyFiles` provider (`TableProvider`).
-pub struct SearchMyFilesProvider {
-    config: SearchMyFilesConfig,
+/// Pure-Rust multi-threaded file & content search provider (`TableProvider`).
+pub struct SearchFilesProvider {
+    config: SearchFilesConfig,
 }
 
-impl SearchMyFilesProvider {
-    pub fn new(config: SearchMyFilesConfig) -> Self {
+impl SearchFilesProvider {
+    pub fn new(config: SearchFilesConfig) -> Self {
         Self { config }
     }
 
-    pub fn config(&self) -> &SearchMyFilesConfig {
+    pub fn config(&self) -> &SearchFilesConfig {
         &self.config
     }
 
     pub fn schema_def() -> TableSchema {
         TableSchema::new(
-            "search_my_files",
-            "SearchMyFiles — File & Content Search",
+            "search_files",
+            "File & Content Search",
             vec![
                 ColumnDef::new("filename", "Filename", ColumnType::Text).with_width_hint(180),
                 ColumnDef::new("folder", "Folder", ColumnType::Text).with_width_hint(260),
@@ -431,7 +431,7 @@ impl SearchMyFilesProvider {
     }
 }
 
-fn matches_time_bounds(ts: &FileTimestamps, cfg: &SearchMyFilesConfig) -> bool {
+fn matches_time_bounds(ts: &FileTimestamps, cfg: &SearchFilesConfig) -> bool {
     if let Some(after) = cfg.created_after
         && ts.created.is_none_or(|t| t < after)
     {
@@ -612,9 +612,9 @@ fn find_subslice(haystack: &[u8], needle: &[u8], ascii_ci: bool) -> Option<usize
         .position(|w| w.iter().zip(needle.iter()).all(|(a, b)| a.to_ascii_lowercase() == *b))
 }
 
-impl TableProvider for SearchMyFilesProvider {
+impl TableProvider for SearchFilesProvider {
     fn tool_id(&self) -> &'static str {
-        "search_my_files"
+        "search_files"
     }
 
     fn description(&self) -> &'static str {

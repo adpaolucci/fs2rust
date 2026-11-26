@@ -11,7 +11,7 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-/// Timestamp propagation mode for `FolderTimeUpdate`.
+/// Timestamp propagation mode for folder timestamp updates.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FolderTimeSource {
@@ -20,7 +20,7 @@ pub enum FolderTimeSource {
     NewestFileOrSubdir,
 }
 
-/// Configuration for `FolderTimeUpdate`.
+/// Configuration for folder timestamp updates.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FolderTimeUpdateConfig {
     pub root: PathBuf,
@@ -100,7 +100,7 @@ struct FolderUpdatePlan {
     would_update: bool,
 }
 
-/// Read-only preview `TableProvider` for `FolderTimeUpdate`.
+/// Read-only preview `TableProvider` for bottom-up folder timestamp propagation.
 pub struct FolderTimeUpdatePreviewProvider {
     config: FolderTimeUpdateConfig,
     backend: Arc<dyn FileSystemOps>,
@@ -114,7 +114,7 @@ impl FolderTimeUpdatePreviewProvider {
     pub fn schema_def() -> TableSchema {
         TableSchema::new(
             "folder_time_update",
-            "FolderTimeUpdate — Preview Bottom-Up Folder Timestamps",
+            "Folder Time Update — Preview Bottom-Up Folder Timestamps",
             vec![
                 ColumnDef::new("folder_path", "Folder Path", ColumnType::Text).with_width_hint(300),
                 ColumnDef::new("old_modified", "Old Modified", ColumnType::Timestamp).with_width_hint(180),
@@ -314,7 +314,7 @@ impl TableProvider for FolderTimeUpdatePreviewProvider {
     }
 }
 
-/// Mutating `ActionCommand` applying post-order `FolderTimeUpdate`.
+/// Mutating `ActionCommand` applying post-order folder timestamp propagation.
 pub struct FolderTimeUpdateAction {
     backend: Arc<dyn FileSystemOps>,
     policy: PolicyContext,

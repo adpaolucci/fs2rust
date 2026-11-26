@@ -45,7 +45,7 @@ fn clap_debug_assert_and_all_24_subcommands_parse() {
         &["fs2rust", "data", "csv", "--path", "a.csv"],
         &["fs2rust", "data", "diff", "--left", "a.csv", "--right", "b.csv"],
         &["fs2rust", "data", "compare", "--left", "a.csv", "--right", "b.csv"],
-        &["fs2rust", "data", "getnir", "--path", "a.csv"],
+        &["fs2rust", "data", "query", "--path", "a.csv"],
         &["fs2rust", "data", "exif", "--path", "a.jpg"],
         &["fs2rust", "data", "codegen", "--json", "a.json"],
         &["fs2rust", "data", "html2text", "--path", "a.html"],
@@ -300,7 +300,7 @@ fn real_fs2rust_binary_e2e_help_tools_exports_and_mcp_stdio() {
         .args([
             "action",
             "--id",
-            "bulk_file_changer_apply",
+            "bulk_file_time_apply",
             "--args",
             &json!({ "targets": [target.to_string_lossy()] }).to_string(),
         ])
@@ -341,7 +341,7 @@ fn real_fs2rust_binary_e2e_help_tools_exports_and_mcp_stdio() {
             "id": 4,
             "method": "tools/call",
             "params": {
-                "name": "bulk_file_changer_apply",
+                "name": "bulk_file_time_apply",
                 "arguments": { "targets": ["/mock/alpha.txt"], "confirm_destructive": true }
             }
         })

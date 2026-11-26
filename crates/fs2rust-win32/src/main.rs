@@ -46,7 +46,7 @@ mod tests {
             }
         }
 
-        // Verify filter, sort, and CSV export on search_my_files / fs2rust.data.csv_file_view
+        // Verify filter, sort, and CSV export on search_files / fs2rust.data.csv_file_view
         assert!(grid.select_tool_by_id("fs2rust.data.csv_file_view"));
         assert_eq!(grid.row_count(), 2);
         grid.set_filter("alpha".to_string());

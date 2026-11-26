@@ -59,9 +59,9 @@ impl HashAlgorithmSet {
     }
 }
 
-/// Configuration for `HashMyFiles`.
+/// Configuration for multi-algorithm file hashing.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct HashMyFilesConfig {
+pub struct HashFilesConfig {
     pub targets: Vec<PathBuf>,
     pub include_patterns: Vec<String>,
     pub exclude_patterns: Vec<String>,
@@ -86,19 +86,19 @@ struct HashedFileResult {
 }
 
 /// Single-pass streaming multi-hasher (`TableProvider`).
-pub struct HashMyFilesProvider {
-    config: HashMyFilesConfig,
+pub struct HashFilesProvider {
+    config: HashFilesConfig,
 }
 
-impl HashMyFilesProvider {
-    pub fn new(config: HashMyFilesConfig) -> Self {
+impl HashFilesProvider {
+    pub fn new(config: HashFilesConfig) -> Self {
         Self { config }
     }
 
     pub fn schema_def() -> TableSchema {
         TableSchema::new(
-            "hash_my_files",
-            "HashMyFiles — Single-Pass Multi-Algorithm File Hasher",
+            "hash_files",
+            "Single-Pass Multi-Algorithm File Hasher",
             vec![
                 ColumnDef::new("filename", "Filename", ColumnType::Text).with_width_hint(180),
                 ColumnDef::new("full_path", "Full Path", ColumnType::Text).with_width_hint(300),
@@ -361,9 +361,9 @@ fn hash_single_file(entry: FileEntry, algos: HashAlgorithmSet) -> HashedFileResu
     }
 }
 
-impl TableProvider for HashMyFilesProvider {
+impl TableProvider for HashFilesProvider {
     fn tool_id(&self) -> &'static str {
-        "hash_my_files"
+        "hash_files"
     }
 
     fn description(&self) -> &'static str {

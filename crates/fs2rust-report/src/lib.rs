@@ -101,7 +101,7 @@ mod tests {
 
     #[test]
     fn all_seven_export_formats_and_merkle_bundle_succeed() {
-        let data = sample_table("search_my_files");
+        let data = sample_table("search_files");
         let opts = default_export_options(None);
         let formats = [
             ExportFormat::Csv,
@@ -131,14 +131,14 @@ mod tests {
 
         let bundle_dir = tmp.path().join("bundle");
         let tables = vec![
-            sample_table("search_my_files"),
+            sample_table("search_files"),
             sample_table("fs2rust.data.csv_file_view"),
         ];
         let bundle = write_bundle_report(&tables, &bundle_dir, ExportFormat::Markdown, &opts).unwrap();
         assert_eq!(bundle.artifact_count, 2);
         assert_eq!(bundle.merkle_root_sha256.len(), 64);
         assert_eq!(bundle.merkle_root_sha512.len(), 128);
-        assert!(bundle_dir.join("search_my_files.md").is_file());
+        assert!(bundle_dir.join("search_files.md").is_file());
         assert!(bundle_dir.join("fs2rust_data_csv_file_view.md").is_file());
         assert!(bundle_dir.join("custody_manifest.json").is_file());
     }

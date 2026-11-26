@@ -17,7 +17,7 @@ pub enum HeaderMode {
     NoHeader,
 }
 
-/// Configuration options for `CSVFileView`.
+/// Configuration options for CSV/TSV viewing.
 #[derive(Debug, Clone)]
 pub struct CsvViewOptions {
     pub delimiter: Option<u8>,
@@ -87,7 +87,7 @@ impl CsvTableProvider {
         if raw_records.is_empty() {
             let schema = TableSchema::new(
                 "fs2rust.data.csv_file_view",
-                format!("CSVFileView — {source_label}"),
+                format!("CSV/TSV Viewer — {source_label}"),
                 vec![],
             );
             return Ok(Self {
@@ -142,7 +142,7 @@ impl CsvTableProvider {
 
         let schema = TableSchema::new(
             "fs2rust.data.csv_file_view",
-            format!("CSVFileView — {source_label}"),
+            format!("CSV/TSV Viewer — {source_label}"),
             columns,
         );
 

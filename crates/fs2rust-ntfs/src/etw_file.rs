@@ -499,7 +499,7 @@ impl Default for FileActivityConfig {
 pub fn file_activity_schema() -> TableSchema {
     TableSchema::new(
         "file_activity_watch",
-        "FileActivityWatch - ETW Kernel-File I/O Activity Monitor",
+        "ETW Kernel-File I/O Activity Monitor",
         vec![
             ColumnDef::new("file_path", "File Path", ColumnType::Text).with_width_hint(300),
             ColumnDef::new("process_name", "Process Name", ColumnType::Text).with_width_hint(140),
@@ -609,7 +609,7 @@ impl Default for FileAccessErrorConfig {
 pub fn file_access_error_schema() -> TableSchema {
     TableSchema::new(
         "file_access_error_view",
-        "FileAccessErrorView - ETW Kernel-File Failed File Operations (NTSTATUS)",
+        "ETW Kernel-File Failed File Operations (NTSTATUS)",
         vec![
             ColumnDef::new("timestamp", "Timestamp", ColumnType::Timestamp).with_width_hint(180),
             ColumnDef::new("pid", "PID", ColumnType::Uint).with_width_hint(75),

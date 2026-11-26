@@ -7,8 +7,8 @@ pub mod csv_view;
 pub mod encoding;
 pub mod error;
 pub mod exif;
-pub mod getnir;
 pub mod html2text;
+pub mod query;
 
 use guap_mcp::McpServerRegistry;
 use guap_table::TableProvider;
@@ -23,10 +23,13 @@ pub use csv_view::{CsvTableProvider, CsvViewOptions, HeaderMode};
 pub use encoding::{DecodedText, TextEncoding, decode_bytes, decode_windows_1252};
 pub use error::DataError;
 pub use exif::{ExifDataViewProvider, ExifDocument, ExifEntry, IfdKind, TiffEndianness, TiffFieldType, parse_exif};
-pub use getnir::{GetNirOutputFormat, GetNirRequest, GetNirSource, GetNirTableProvider, evaluate_getnir};
 pub use html2text::{
     HeadingStyle, HtmlAsTextOptions, HtmlAsTextOutput, HtmlAsTextProvider, HtmlBlock, HtmlLink, HtmlLinksProvider,
     html_to_text,
+};
+pub use query::{
+    TabularQueryEvaluation, TabularQueryFormat, TabularQueryProvider, TabularQueryRequest, TabularQuerySource,
+    evaluate_query, format_aligned_text,
 };
 
 /// Return static descriptor metadata (`(tool_id, description)`) for all 7 `fs2rust-data` tools.
@@ -41,8 +44,8 @@ pub fn provider_descriptors() -> Vec<(&'static str, &'static str)> {
             "Compare two CSV/TSV/JSONL/TableData inputs by key columns or row position",
         ),
         (
-            "fs2rust.data.getnir",
-            "Evaluate NirSoft-style tabular queries (columns, where, sort, top) and format outputs",
+            "fs2rust.data.query",
+            "Evaluate tabular queries (columns, where, sort, top) and format outputs",
         ),
         (
             "fs2rust.data.exif_data_view",

@@ -10,8 +10,9 @@ use fs2rust_core::{
 };
 use fs2rust_data::{
     AddrViewProvider, CodegenInput, CodegenTarget, CodegenTemplate, ContactFormat, CsvTableProvider, CsvViewOptions,
-    EscapeMode, ExifDataViewProvider, GetNirRequest, GetNirSource, GetNirTableProvider, HtmlAsTextOptions,
-    HtmlAsTextProvider, SimpleCodeGeneratorProvider, TableCompareOptions, TableCompareProvider, TableInput,
+    EscapeMode, ExifDataViewProvider, HtmlAsTextOptions, HtmlAsTextProvider, SimpleCodeGeneratorProvider,
+    TableCompareOptions, TableCompareProvider, TableInput, TabularQueryProvider, TabularQueryRequest,
+    TabularQuerySource,
 };
 use fs2rust_ntfs::{
     AdsEntry, AlternateStreamConfig, AlternateStreamDeleteAction, AlternateStreamViewProvider, AppReadWriteConfig,
@@ -25,11 +26,10 @@ use fs2rust_ntfs::{
     UsnJournalViewProvider, UsnQueryMode, UsnRecord,
 };
 use fs2rust_search::{
-    BulkChangeSpec, BulkFileChangerAction, BulkFileChangerPreviewProvider, FolderTimeSource, FolderTimeUpdateAction,
+    BulkChangeSpec, BulkFileTimeAction, BulkFileTimePreviewProvider, FolderTimeSource, FolderTimeUpdateAction,
     FolderTimeUpdateConfig, FolderTimeUpdatePreviewProvider, FoldersReportConfig, FoldersReportProvider,
-    HashMyFilesConfig, HashMyFilesProvider, SearchMyFilesConfig, SearchMyFilesProvider, ShellLinkFile, ShellLinkHeader,
-    ShortcutsManConfig, ShortcutsManDeleteAction, ShortcutsManFixAction, ShortcutsManProvider, StringData,
-    TimestampChange,
+    HashFilesConfig, HashFilesProvider, SearchFilesConfig, SearchFilesProvider, ShellLinkFile, ShellLinkHeader,
+    ShortcutsConfig, ShortcutsDeleteAction, ShortcutsFixAction, ShortcutsProvider, StringData, TimestampChange,
 };
 use guap_mcp::{ActionCommand, McpServerRegistry, PolicyMode};
 use guap_table::{ColumnDef, ColumnType, TableData, TableProvider, TableSchema};
@@ -424,9 +424,11 @@ fn build_default_data_providers(synthetic: bool) -> Vec<Arc<dyn TableProvider>> 
         )
         .expect("synthetic compare succeeds");
 
-        let getnir_provider =
-            GetNirTableProvider::from_source(GetNirSource::StdinBytes(csv_bytes.to_vec()), &GetNirRequest::default())
-                .expect("synthetic getnir succeeds");
+        let query_provider = TabularQueryProvider::from_source(
+            TabularQuerySource::StdinBytes(csv_bytes.to_vec()),
+            &TabularQueryRequest::default(),
+        )
+        .expect("synthetic query succeeds");
 
         let exif_provider = ExifDataViewProvider::from_bytes("synthetic.jpg", build_synthetic_jpeg_exif_bytes());
 
@@ -454,7 +456,7 @@ fn build_default_data_providers(synthetic: bool) -> Vec<Arc<dyn TableProvider>> 
         return vec![
             Arc::new(csv_provider),
             Arc::new(compare_provider),
-            Arc::new(getnir_provider),
+            Arc::new(query_provider),
             Arc::new(exif_provider),
             Arc::new(codegen_provider),
             Arc::new(html_provider),
@@ -486,9 +488,11 @@ fn build_default_data_providers(synthetic: bool) -> Vec<Arc<dyn TableProvider>> 
     )
     .expect("empty table compare succeeds");
 
-    let getnir_provider =
-        GetNirTableProvider::from_source(GetNirSource::StdinBytes(sample_csv.to_vec()), &GetNirRequest::default())
-            .expect("empty getnir succeeds");
+    let query_provider = TabularQueryProvider::from_source(
+        TabularQuerySource::StdinBytes(sample_csv.to_vec()),
+        &TabularQueryRequest::default(),
+    )
+    .expect("empty query succeeds");
 
     let exif_provider = ExifDataViewProvider::from_paths(Vec::new());
     let codegen_provider = SimpleCodeGeneratorProvider::from_input(
@@ -505,7 +509,7 @@ fn build_default_data_providers(synthetic: bool) -> Vec<Arc<dyn TableProvider>> 
     vec![
         Arc::new(csv_provider),
         Arc::new(compare_provider),
-        Arc::new(getnir_provider),
+        Arc::new(query_provider),
         Arc::new(exif_provider),
         Arc::new(codegen_provider),
         Arc::new(html_provider),
@@ -522,10 +526,10 @@ pub fn build_suite_wiring(offline: bool, roots: Vec<PathBuf>) -> SuiteWiring {
     let os_fs: Arc<dyn FileSystemOps> = Arc::new(OsFileSystem);
     let ntfs_backend: Arc<dyn NtfsBackend> = Arc::new(LiveNtfsBackend);
 
-    let search_cfg = SearchMyFilesConfig {
+    let search_cfg = SearchFilesConfig {
         roots: roots.clone(),
         max_depth: Some(4),
-        ..SearchMyFilesConfig::default()
+        ..SearchFilesConfig::default()
     };
     let bulk_spec = BulkChangeSpec::default();
     let folder_time_cfg = FolderTimeUpdateConfig {
@@ -538,26 +542,26 @@ pub fn build_suite_wiring(offline: bool, roots: Vec<PathBuf>) -> SuiteWiring {
         depth: 1,
         ..FoldersReportConfig::default()
     };
-    let shortcuts_cfg = ShortcutsManConfig {
+    let shortcuts_cfg = ShortcutsConfig {
         scan_roots: roots,
-        ..ShortcutsManConfig::default()
+        ..ShortcutsConfig::default()
     };
-    let hash_cfg = HashMyFilesConfig::default();
+    let hash_cfg = HashFilesConfig::default();
 
     let ntfs_cfg = NtfsToolsConfig::default();
     let policy = ntfs_cfg.action_policy.clone();
 
     let mut providers: Vec<Arc<dyn TableProvider>> = vec![
         // fs2rust-search (6)
-        Arc::new(SearchMyFilesProvider::new(search_cfg)),
-        Arc::new(BulkFileChangerPreviewProvider::new(bulk_spec, Arc::clone(&os_fs))),
+        Arc::new(SearchFilesProvider::new(search_cfg)),
+        Arc::new(BulkFileTimePreviewProvider::new(bulk_spec, Arc::clone(&os_fs))),
         Arc::new(FolderTimeUpdatePreviewProvider::new(
             folder_time_cfg,
             Arc::clone(&os_fs),
         )),
         Arc::new(FoldersReportProvider::new(folders_report_cfg, Arc::clone(&os_fs))),
-        Arc::new(ShortcutsManProvider::with_backend(shortcuts_cfg, Arc::clone(&os_fs))),
-        Arc::new(HashMyFilesProvider::new(hash_cfg)),
+        Arc::new(ShortcutsProvider::with_backend(shortcuts_cfg, Arc::clone(&os_fs))),
+        Arc::new(HashFilesProvider::new(hash_cfg)),
         // fs2rust-ntfs (11)
         Arc::new(DriveLetterProvider::new(
             ntfs_cfg.drive_letter,
@@ -608,10 +612,10 @@ pub fn build_suite_wiring(offline: bool, roots: Vec<PathBuf>) -> SuiteWiring {
 
     let actions: Vec<Arc<dyn ActionCommand>> = vec![
         // fs2rust-search (4)
-        Arc::new(BulkFileChangerAction::new(Arc::clone(&os_fs))),
+        Arc::new(BulkFileTimeAction::new(Arc::clone(&os_fs))),
         Arc::new(FolderTimeUpdateAction::new(Arc::clone(&os_fs))),
-        Arc::new(ShortcutsManFixAction::new(Arc::clone(&os_fs))),
-        Arc::new(ShortcutsManDeleteAction::new(os_fs)),
+        Arc::new(ShortcutsFixAction::new(Arc::clone(&os_fs))),
+        Arc::new(ShortcutsDeleteAction::new(os_fs)),
         // fs2rust-ntfs (4)
         Arc::new(DriveLetterAssignAction::new(Arc::clone(&ntfs_backend)).with_policy(policy.clone())),
         Arc::new(DriveLetterRemoveAction::new(Arc::clone(&ntfs_backend)).with_policy(policy.clone())),
@@ -652,9 +656,9 @@ pub fn build_synthetic_suite_wiring_with_mocks() -> (SuiteWiring, Arc<MockFileSy
     let ntfs_mock = Arc::new(MockNtfsBackend::with_sample_data());
     let ntfs_backend: Arc<dyn NtfsBackend> = Arc::clone(&ntfs_mock) as Arc<dyn NtfsBackend>;
 
-    let search_cfg = SearchMyFilesConfig {
+    let search_cfg = SearchFilesConfig {
         roots: vec![disk_root.clone()],
-        ..SearchMyFilesConfig::default()
+        ..SearchFilesConfig::default()
     };
     let bulk_spec = BulkChangeSpec {
         targets: vec![PathBuf::from("/mock/alpha.txt")],
@@ -671,13 +675,13 @@ pub fn build_synthetic_suite_wiring_with_mocks() -> (SuiteWiring, Arc<MockFileSy
         depth: 2,
         ..FoldersReportConfig::default()
     };
-    let shortcuts_cfg = ShortcutsManConfig {
+    let shortcuts_cfg = ShortcutsConfig {
         scan_roots: vec![PathBuf::from("/mock")],
-        ..ShortcutsManConfig::default()
+        ..ShortcutsConfig::default()
     };
-    let hash_cfg = HashMyFilesConfig {
+    let hash_cfg = HashFilesConfig {
         targets: vec![disk_root],
-        ..HashMyFilesConfig::default()
+        ..HashFilesConfig::default()
     };
 
     let sample_ts = Utc.with_ymd_and_hms(2026, 11, 24, 1, 0, 0).unwrap();
@@ -767,18 +771,18 @@ pub fn build_synthetic_suite_wiring_with_mocks() -> (SuiteWiring, Arc<MockFileSy
 
     let mut providers: Vec<Arc<dyn TableProvider>> = vec![
         // fs2rust-search (6)
-        Arc::new(SearchMyFilesProvider::new(search_cfg)),
-        Arc::new(BulkFileChangerPreviewProvider::new(bulk_spec, Arc::clone(&fs_backend))),
+        Arc::new(SearchFilesProvider::new(search_cfg)),
+        Arc::new(BulkFileTimePreviewProvider::new(bulk_spec, Arc::clone(&fs_backend))),
         Arc::new(FolderTimeUpdatePreviewProvider::new(
             folder_time_cfg,
             Arc::clone(&fs_backend),
         )),
         Arc::new(FoldersReportProvider::new(folders_report_cfg, Arc::clone(&fs_backend))),
-        Arc::new(ShortcutsManProvider::with_backend(
+        Arc::new(ShortcutsProvider::with_backend(
             shortcuts_cfg,
             Arc::clone(&fs_backend),
         )),
-        Arc::new(HashMyFilesProvider::new(hash_cfg)),
+        Arc::new(HashFilesProvider::new(hash_cfg)),
         // fs2rust-ntfs (11)
         Arc::new(DriveLetterProvider::new(
             ntfs_cfg.drive_letter,
@@ -829,10 +833,10 @@ pub fn build_synthetic_suite_wiring_with_mocks() -> (SuiteWiring, Arc<MockFileSy
 
     let actions: Vec<Arc<dyn ActionCommand>> = vec![
         // fs2rust-search (4)
-        Arc::new(BulkFileChangerAction::new(Arc::clone(&fs_backend))),
+        Arc::new(BulkFileTimeAction::new(Arc::clone(&fs_backend))),
         Arc::new(FolderTimeUpdateAction::new(Arc::clone(&fs_backend))),
-        Arc::new(ShortcutsManFixAction::new(Arc::clone(&fs_backend))),
-        Arc::new(ShortcutsManDeleteAction::new(fs_backend)),
+        Arc::new(ShortcutsFixAction::new(Arc::clone(&fs_backend))),
+        Arc::new(ShortcutsDeleteAction::new(fs_backend)),
         // fs2rust-ntfs (4)
         Arc::new(DriveLetterAssignAction::new(Arc::clone(&ntfs_backend)).with_policy(policy.clone())),
         Arc::new(DriveLetterRemoveAction::new(Arc::clone(&ntfs_backend)).with_policy(policy.clone())),
@@ -948,7 +952,7 @@ mod tests {
 
         // 5. Read-only table queries across search, ntfs, data
         for table_name in [
-            "search_my_files",
+            "search_files",
             "drive_letter_view",
             "disk_smart_view",
             "fs2rust.data.csv_file_view",
@@ -969,7 +973,7 @@ mod tests {
         // 6. All 8 mutating actions exercised across ReadOnlyOnly, AllowMutating unconfirmed, dry_run, and apply
         let action_cases: Vec<(&str, Value)> = vec![
             (
-                "bulk_file_changer_apply",
+                "bulk_file_time_apply",
                 json!({ "targets": ["/mock/alpha.txt"], "set_attributes": ["ReadOnly"] }),
             ),
             (
@@ -977,11 +981,11 @@ mod tests {
                 json!({ "root": "/mock", "source": "newest_file_or_subdir" }),
             ),
             (
-                "shortcuts_man_fix_target",
+                "shortcuts_fix_target",
                 json!({ "shortcut_path": "/mock/broken.lnk", "new_target": r"C:\Tools\new.exe" }),
             ),
             (
-                "shortcuts_man_delete",
+                "shortcuts_delete",
                 json!({ "shortcut_paths": ["/mock/broken.lnk"], "only_if_broken": true }),
             ),
             (

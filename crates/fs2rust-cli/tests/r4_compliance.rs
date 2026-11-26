@@ -44,7 +44,7 @@ const FORBIDDEN_PATTERNS: &[(&str, &str)] = &[
     ("queueuserapc", "prohibited APC injection API"),
     ("setwindowshookexw", "prohibited global hook API"),
     ("writeprocessmemory", "prohibited remote memory write API"),
-    // 39 retired legacy NirSoft tools (R4 §8.3)
+    // 39 retired legacy tools (R4 §8.3)
     ("iecacheview", "retired legacy IE tool"),
     ("iehistoryview", "retired legacy IE tool"),
     ("iecookiesview", "retired legacy IE tool"),

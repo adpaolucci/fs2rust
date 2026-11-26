@@ -293,7 +293,7 @@ pub struct NtfsLinksConfig {
 pub fn ntfs_links_schema() -> TableSchema {
     TableSchema::new(
         "ntfs_links_view",
-        "NTFSLinksView - NTFS Symbolic Links, Junctions, AppExecLinks & Hard Links",
+        "NTFS Symbolic Links, Junctions, AppExecLinks & Hard Links",
         vec![
             ColumnDef::new("link_path", "Link Path", ColumnType::Text).with_width_hint(260),
             ColumnDef::new("link_type", "Link Type", ColumnType::Text).with_width_hint(110),

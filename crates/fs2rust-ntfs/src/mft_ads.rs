@@ -334,7 +334,7 @@ pub struct AlternateStreamConfig {
 pub fn alternate_stream_schema() -> TableSchema {
     TableSchema::new(
         "alternate_stream_view",
-        "AlternateStreamView - NTFS Alternate Data Streams (Live & Offline $MFT)",
+        "NTFS Alternate Data Streams (Live & Offline $MFT)",
         vec![
             ColumnDef::new("file_path", "File Path", ColumnType::Text).with_width_hint(260),
             ColumnDef::new("stream_name", "Stream Name", ColumnType::Text).with_width_hint(150),

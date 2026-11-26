@@ -10,7 +10,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
 
-/// Input source accepted by `TableTextCompare`.
+/// Input source accepted by table diff comparison.
 pub enum TableInput {
     Csv { path: PathBuf, options: CsvViewOptions },
     Tsv { path: PathBuf },
@@ -26,7 +26,7 @@ pub enum CompareKeyMode {
     Positional,
 }
 
-/// Options controlling `TableTextCompare`.
+/// Options controlling table diff comparison.
 #[derive(Debug, Clone)]
 pub struct TableCompareOptions {
     pub key_mode: CompareKeyMode,
@@ -51,7 +51,7 @@ pub struct TableCompareResult {
     pub table: TableData,
 }
 
-/// `TableProvider` wrapping a `TableTextCompare` diff result.
+/// `TableProvider` wrapping a tabular diff result.
 pub struct TableCompareProvider {
     result: TableCompareResult,
 }
@@ -80,7 +80,7 @@ impl TableCompareProvider {
         let diff = GuapTableTextCompare::diff(&diff_left, &diff_right, &key_cols)?;
         let mut table = diff.to_table_data();
         table.schema.tool_id = "fs2rust.data.table_text_compare".to_string();
-        table.schema.title = "TableTextCompare — Tabular Diff".to_string();
+        table.schema.title = "Tabular Diff".to_string();
 
         let left_col_ids: Vec<String> = diff_left.schema.columns.iter().map(|c| c.id.clone()).collect();
         let right_col_ids: Vec<String> = diff_right.schema.columns.iter().map(|c| c.id.clone()).collect();

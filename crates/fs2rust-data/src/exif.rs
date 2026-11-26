@@ -804,7 +804,7 @@ pub fn tag_name(ifd: IfdKind, tag_id: u16) -> &'static str {
     }
 }
 
-/// `ExifDataView` `TableProvider` reading EXIF tags from one or more JPEG/TIFF files or in-memory buffers.
+/// `TableProvider` reading EXIF tags from one or more JPEG/TIFF files or in-memory buffers.
 pub struct ExifDataViewProvider {
     sources: Vec<(String, Vec<u8>)>,
     paths: Vec<PathBuf>,
@@ -828,7 +828,7 @@ impl ExifDataViewProvider {
     pub fn schema_def() -> TableSchema {
         TableSchema::new(
             "fs2rust.data.exif_data_view",
-            "ExifDataView — JPEG/TIFF EXIF Metadata",
+            "JPEG/TIFF EXIF Metadata",
             vec![
                 ColumnDef::new("file_path", "File Path", ColumnType::Text).with_width_hint(240),
                 ColumnDef::new("ifd", "IFD", ColumnType::Text).with_width_hint(100),

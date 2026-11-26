@@ -110,7 +110,7 @@ pub struct DriveLetterConfig {
 pub fn drive_letter_schema() -> TableSchema {
     TableSchema::new(
         "drive_letter_view",
-        "DriveLetterView - Logical Drives, Volume GUIDs & MountedDevices",
+        "Logical Drives, Volume GUIDs & MountedDevices",
         vec![
             ColumnDef::new("drive_letter", "Drive Letter", ColumnType::Text).with_width_hint(80),
             ColumnDef::new("drive_type", "Drive Type", ColumnType::Text).with_width_hint(110),

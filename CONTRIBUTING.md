@@ -7,7 +7,7 @@ The workspace consists of 9 modular crates under `crates/`:
 - `fs2rust-core`: Shared errors, config, `FileSystemOps` traits, `PolicyContext` guards, FILETIME decoders, and stderr logging.
 - `fs2rust-search`: 6 `#![forbid(unsafe_code)]` filesystem search, bulk timestamp/attribute, folder report, `.lnk` parser, and multi-hash tools (+ 4 mutating actions).
 - `fs2rust-ntfs`: 11 NTFS, disk counter, ETW `Kernel-File`, S.M.A.R.T., ADS/`$MFT`, reparse/hardlink, Property System, and `$UsnJrnl` tools (+ 4 mutating actions).
-- `fs2rust-data`: 7 `#![forbid(unsafe_code)]` CSV/diff/GetNir/EXIF/codegen/HTML-to-text/contact tools.
+- `fs2rust-data`: 7 `#![forbid(unsafe_code)]` CSV/diff/query/EXIF/codegen/HTML-to-text/contact tools.
 - `fs2rust-report`: Multi-format reporting and SHA-256/512 Merkle chain-of-custody manifests.
 - `fs2rust-mcp`: Policy-gated JSON-RPC 2.0 stdio MCP server (`ReadOnlyOnly` default).
 - `fs2rust-cli`: `clap` 4.6 derive CLI (`fs2rust`).

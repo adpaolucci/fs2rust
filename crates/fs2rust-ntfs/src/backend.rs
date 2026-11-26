@@ -79,7 +79,7 @@ impl NtfsBackend for LiveNtfsBackend {
         #[cfg(not(windows))]
         {
             Err(FsError::Unsupported(
-                "DriveLetterView live enumeration requires Windows".to_string(),
+                "Drive letter live enumeration requires Windows".to_string(),
             ))
         }
     }

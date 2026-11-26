@@ -140,7 +140,7 @@ pub struct AppReadWriteConfig {
 pub fn app_read_write_schema() -> TableSchema {
     TableSchema::new(
         "app_read_write_counter",
-        "AppReadWriteCounter - Per-Process Read/Write I/O Counters & Rates",
+        "Per-Process Read/Write I/O Counters & Rates",
         vec![
             ColumnDef::new("pid", "PID", ColumnType::Uint).with_width_hint(75),
             ColumnDef::new("process_name", "Process Name", ColumnType::Text).with_width_hint(160),

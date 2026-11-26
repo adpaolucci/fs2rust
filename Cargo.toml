@@ -21,7 +21,7 @@ repository = "https://github.com/adpaolucci/fs2rust"
 homepage = "https://fs2rust.guap.ca"
 documentation = "https://fs2rust.guap.ca"
 authors = ["GUAP Contributors"]
-description = "Pure-Rust filesystem search, NTFS/disk telemetry, and structured data utility suite (NirSoft-to-Rust GUAP ecosystem)"
+description = "Pure-Rust filesystem search, NTFS/disk telemetry, and structured data utility suite (GUAP ecosystem)"
 keywords = ["filesystem", "search", "ntfs", "exif", "windows"]
 categories = ["command-line-utilities", "filesystem", "development-tools"]
 

@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
 
-/// Input data source for `SimpleCodeGenerator`.
+/// Input data source for template code generation.
 #[derive(Debug, Clone)]
 pub enum CodegenInput {
     RegexCapture {
@@ -65,7 +65,7 @@ impl EscapeMode {
     }
 }
 
-/// Template specification for `SimpleCodeGenerator`.
+/// Template specification for snippet generation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodegenTemplate {
     pub rule_name: String,
@@ -93,7 +93,7 @@ impl Default for CodegenTemplate {
     }
 }
 
-/// Generated output envelope from `SimpleCodeGenerator`.
+/// Generated output envelope from template code generation.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CodegenResult {
     pub rule_name: String,
@@ -422,7 +422,7 @@ fn apply_escape(val: &str, mode: EscapeMode) -> String {
     }
 }
 
-/// `TableProvider` wrapping generated `SimpleCodeGenerator` snippets.
+/// `TableProvider` wrapping generated code snippets.
 pub struct SimpleCodeGeneratorProvider {
     result: CodegenResult,
 }
@@ -440,7 +440,7 @@ impl SimpleCodeGeneratorProvider {
     pub fn schema_def() -> TableSchema {
         TableSchema::new(
             "fs2rust.data.simple_code_generator",
-            "SimpleCodeGenerator — Generated Code Snippets",
+            "Generated Code Snippets",
             vec![
                 ColumnDef::new("rule_name", "Rule Name", ColumnType::Text).with_width_hint(140),
                 ColumnDef::new("row_index", "Row #", ColumnType::Uint).with_width_hint(70),

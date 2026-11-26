@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.9.0.schema.json
+
+PackageIdentifier: adpaolucci.fs2rust
+PackageVersion: 0.1.0
+PackageLocale: en-US
+Publisher: adpaolucci
+PublisherUrl: https://github.com/adpaolucci
+PublisherSupportUrl: https://github.com/adpaolucci/fs2rust/issues
+PackageName: FS2Rust
+PackageUrl: https://fs2rust.guap.ca
+License: Apache-2.0
+LicenseUrl: https://github.com/adpaolucci/fs2rust/blob/main/LICENSE
+Copyright: Copyright (c) 2026 adpaolucci
+ShortDescription: 24-tool pure-Rust filesystem search, NTFS/disk telemetry, and structured data suite with dual GUIs, CLI, and MCP server.
+Description: >-
+  fs2rust is a 24-tool filesystem search, NTFS/disk/ETW telemetry, and structured data
+  inspection suite built in Rust (Edition 2024) on guap-kit. It covers recursive file
+  search, bulk timestamp/attribute updates, folder reports, [MS-SHLLINK] .lnk analysis,
+  streaming multi-hashing, drive letters, disk counters, ETW Kernel-File activity/errors,
+  ATA/NVMe S.M.A.R.T., Alternate Data Streams, NTFS links, Property System, $UsnJrnl,
+  CSV/TSV viewing, table diffs, GetNir queries, pure-Rust EXIF, codegen, HTML-to-text,
+  and vCard/LDIF contacts, with dual Win32 (WinSafe) & Iced 0.14 GUIs, 7-format exports
+  with SHA-256/512 Merkle custody, and a read-only-default MCP JSON-RPC stdio server.
+Moniker: fs2rust
+Tags:
+  - windows
+  - filesystem
+  - ntfs
+  - etw
+  - smart
+  - exif
+  - csv
+  - rust
+  - cli
+  - gui
+  - mcp
+ReleaseNotesUrl: https://github.com/adpaolucci/fs2rust/releases/tag/v0.1.0
+Documentations:
+  - DocumentLabel: Project Hub & Documentation
+    DocumentUrl: https://fs2rust.guap.ca
+ManifestType: defaultLocale
+ManifestVersion: 1.9.0

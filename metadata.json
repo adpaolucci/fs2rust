@@ -1,0 +1,22 @@
+{
+  "name": "FS2Rust Filesystem, NTFS & Data Workstation",
+  "version": "0.1.0",
+  "description": "24-tool pure-Rust filesystem search, NTFS/disk/ETW telemetry, and structured data utility suite with dual Win32/Iced GUIs, CLI, Merkle custody reports, and policy-gated MCP server.",
+  "repository": "https://github.com/adpaolucci/fs2rust",
+  "homepage": "https://fs2rust.guap.ca",
+  "license": "Apache-2.0",
+  "binaries": [
+    "fs2rust",
+    "fs2rust-win32",
+    "fs2rust-iced",
+    "fs2rust-mcp"
+  ],
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "6 filesystem search, timestamp/attribute, folder size report, [MS-SHLLINK] .lnk, and streaming multi-hash tools (4 gated mutating actions)",
+    "11 NTFS & disk telemetry tools covering drive letters, IOCTL disk counters, ETW Kernel-File activity/errors, ReadDirectoryChangesW, process I/O, ATA/NVMe S.M.A.R.T., ADS, reparse/hardlinks, Property System, and $UsnJrnl (4 gated mutating actions)",
+    "7 pure-Rust structured data tools: CSVFileView, TableTextCompare, GetNir, JPEG/TIFF EXIF parser, SimpleCodeGenerator, HTMLAsText, and AddrView",
+    "Native Win32 (WinSafe) & Iced 0.14 dual GUIs, 7-format guap-export with CSV formula neutralization + SHA-256/512 Merkle custody manifests",
+    "Policy-gated MCP JSON-RPC 2.0 (2024-11-05) stdio server enforcing ReadOnlyOnly default and -32003 refusal on unconfirmed mutations"
+  ]
+}

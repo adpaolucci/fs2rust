@@ -1,0 +1,74 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/fs2rust-core",
+    "crates/fs2rust-search",
+    "crates/fs2rust-ntfs",
+    "crates/fs2rust-data",
+    "crates/fs2rust-report",
+    "crates/fs2rust-mcp",
+    "crates/fs2rust-cli",
+    "crates/fs2rust-win32",
+    "crates/fs2rust-iced",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "Apache-2.0"
+repository = "https://github.com/adpaolucci/fs2rust"
+homepage = "https://fs2rust.guap.ca"
+documentation = "https://fs2rust.guap.ca"
+authors = ["GUAP Contributors"]
+description = "Pure-Rust filesystem search, NTFS/disk telemetry, and structured data utility suite (NirSoft-to-Rust GUAP ecosystem)"
+keywords = ["filesystem", "search", "ntfs", "exif", "windows"]
+categories = ["command-line-utilities", "filesystem", "development-tools"]
+
+[workspace.dependencies]
+guap-table = { path = "../guap-kit/crates/guap-table" }
+guap-export = { path = "../guap-kit/crates/guap-export" }
+guap-gui-win32 = { path = "../guap-kit/crates/guap-gui-win32" }
+guap-gui-iced = { path = "../guap-kit/crates/guap-gui-iced" }
+guap-mcp = { path = "../guap-kit/crates/guap-mcp" }
+
+fs2rust-core = { path = "crates/fs2rust-core" }
+fs2rust-search = { path = "crates/fs2rust-search" }
+fs2rust-ntfs = { path = "crates/fs2rust-ntfs" }
+fs2rust-data = { path = "crates/fs2rust-data" }
+fs2rust-report = { path = "crates/fs2rust-report" }
+fs2rust-mcp = { path = "crates/fs2rust-mcp" }
+embed-resource = "3.0"
+
+anyhow = "1.0"
+thiserror = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1.13"
+walkdir = "2.5"
+csv = "1.4"
+md-5 = "0.10"
+sha1 = "0.11"
+sha2 = "0.11"
+crc32fast = "1.5"
+hex = "0.4"
+windows = "0.62"
+tempfile = "3.27"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+dirs = "7.0"
+clap = { version = "4.6", features = ["derive"] }
+tokio = "1.54"
+winsafe = { version = "0.0.29", features = ["gui", "shell"] }
+iced = { version = "0.14", features = ["wgpu", "tiny-skia", "tokio"] }
+rfd = "0.18"
+arboard = "3.7"
+ctrlc = "3.5"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = true

@@ -1,0 +1,67 @@
+# Smithery configuration for fs2rust
+# https://smithery.ai
+name: fs2rust-mcp
+version: "0.1.0"
+description: "24-tool pure-Rust filesystem search, NTFS/disk telemetry, and structured data suite with read-only default MCP server"
+repository: "https://github.com/adpaolucci/fs2rust"
+license: "Apache-2.0"
+
+entrypoint:
+  type: stdio
+  command: fs2rust
+  args:
+    - mcp
+
+build:
+  type: cargo
+  crate: fs2rust-cli
+
+tools:
+  - name: search_my_files
+    description: "Multi-threaded recursive file search with wildcards, size/time/attribute filters, content grep, and SHA-256 duplicate grouping."
+  - name: bulk_file_changer
+    description: "Preview timestamp (Created/Modified/Accessed) and Windows attribute changes for files and folders."
+  - name: folder_time_update
+    description: "Preview bottom-up folder timestamp propagation based on newest child files or subfolders."
+  - name: folders_report
+    description: "Aggregate directory file counts, subfolder counts, logical sizes, and allocated size-on-disk."
+  - name: shortcuts_man
+    description: "Pure-Rust [MS-SHLLINK] .lnk shortcut parser and broken target detector."
+  - name: hash_my_files
+    description: "Single-pass streaming MD5, SHA-1, SHA-256, SHA-512, and CRC32 file hasher with duplicate grouping."
+  - name: drive_letter_view
+    description: "Inspect logical drive letters, volume GUIDs, filesystems, capacities, and MountedDevices mappings."
+  - name: disk_counters_view
+    description: "Query IOCTL_DISK_PERFORMANCE read/write counters, latencies, and queue depth."
+  - name: file_activity_watch
+    description: "Monitor real-time file read/write/create/delete activity via ETW Microsoft-Windows-Kernel-File."
+  - name: folder_changes_view
+    description: "Monitor directory changes via ReadDirectoryChangesW or deterministic snapshot diff."
+  - name: file_access_error_view
+    description: "Detect failed file operations and non-zero NTSTATUS codes via ETW Kernel-File OperationEnd."
+  - name: app_read_write_counter
+    description: "Track per-process I/O counters and read/write rates via GetProcessIoCounters and ETW."
+  - name: disk_smart_view
+    description: "Inspect ATA S.M.A.R.T. attributes and NVMe health logs (temperature, wear, media errors)."
+  - name: alternate_stream_view
+    description: "Enumerate NTFS Alternate Data Streams via FindFirstStreamW or offline $MFT records."
+  - name: ntfs_links_view
+    description: "Inspect NTFS symlinks, directory junctions, reparse points, and hardlinks."
+  - name: property_system_view
+    description: "Read Windows Shell Property System canonical properties via IPropertyStore."
+  - name: usn_journal_view
+    description: "Query and decode NTFS $UsnJrnl:$J USN_RECORD_V2/V3 change journal records."
+  - name: fs2rust.data.csv_file_view
+    description: "Dynamic CSV/TSV viewer with auto-delimiter, encoding detection, and typed column inference."
+  - name: fs2rust.data.table_text_compare
+    description: "Compare two CSV/TSV/JSONL/TableData inputs by key columns or row position."
+  - name: fs2rust.data.getnir
+    description: "Evaluate NirSoft-style tabular queries (columns, where, sort, top) and format outputs."
+  - name: fs2rust.data.exif_data_view
+    description: "Pure-Rust JPEG APP1 and TIFF IFD0/Exif/GPS/Interop/IFD1 EXIF metadata parser."
+  - name: fs2rust.data.simple_code_generator
+    description: "Template-based snippet generator from regex captures, CSV, JSON, or TableData."
+  - name: fs2rust.data.html_as_text
+    description: "Pure-Rust HTML-to-text extractor preserving headings, lists, tables, preformatted blocks, and link footnotes."
+  - name: fs2rust.data.addr_view
+    description: "Pure-Rust contact book reader for vCard (.vcf), LDIF (.ldif), and contact CSV files."

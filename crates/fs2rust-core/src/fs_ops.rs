@@ -149,10 +149,14 @@ impl FileSystemOps for OsFileSystem {
         }
         #[cfg(not(windows))]
         {
-            let file = std::fs::OpenOptions::new()
-                .write(true)
-                .open(path)
-                .map_err(|e| FsError::from_io(path, e))?;
+            let file = if path.is_dir() {
+                File::open(path).map_err(|e| FsError::from_io(path, e))?
+            } else {
+                std::fs::OpenOptions::new()
+                    .write(true)
+                    .open(path)
+                    .map_err(|e| FsError::from_io(path, e))?
+            };
             let mut times = std::fs::FileTimes::new();
             if let Some(m) = timestamps.modified {
                 times = times.set_modified(std::time::SystemTime::from(m));
@@ -332,8 +336,11 @@ impl MockFileSystem {
     }
 
     fn norm_key(path: &Path) -> PathBuf {
-        let s = path.to_string_lossy().replace('/', "\\");
-        let trimmed = s.trim_end_matches('\\');
+        let sep = std::path::MAIN_SEPARATOR;
+        let s = path
+            .to_string_lossy()
+            .replace(['/', '\\'], std::path::MAIN_SEPARATOR_STR);
+        let trimmed = s.trim_end_matches(sep);
         if trimmed.is_empty() {
             PathBuf::from(s)
         } else {

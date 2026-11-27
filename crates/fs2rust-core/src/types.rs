@@ -831,23 +831,33 @@ mod tests {
 
     #[test]
     fn policy_context_rejects_traversal_and_accepts_existing_root_child() {
+        #[cfg(windows)]
+        let (root, traversal, sibling, valid) = (
+            r"C:\allowed",
+            r"C:\allowed\..\secret\file.txt",
+            r"C:\allowed_other\file.txt",
+            r"C:\allowed\sub\file.txt",
+        );
+        #[cfg(not(windows))]
+        let (root, traversal, sibling, valid) = (
+            "/allowed",
+            "/allowed/../secret/file.txt",
+            "/allowed_other/file.txt",
+            "/allowed/sub/file.txt",
+        );
         let mock_policy = PolicyContext {
-            allowed_roots: vec![PathBuf::from(r"C:\allowed")],
+            allowed_roots: vec![PathBuf::from(root)],
             ..PolicyContext::allow_mutating(false, true)
         };
         assert!(matches!(
-            mock_policy.check_path_allowed(Path::new(r"C:\allowed\..\secret\file.txt")),
+            mock_policy.check_path_allowed(Path::new(traversal)),
             Err(FsError::PolicyDenied(_))
         ));
         assert!(matches!(
-            mock_policy.check_path_allowed(Path::new(r"C:\allowed_other\file.txt")),
+            mock_policy.check_path_allowed(Path::new(sibling)),
             Err(FsError::PolicyDenied(_))
         ));
-        assert!(
-            mock_policy
-                .check_path_allowed(Path::new(r"C:\allowed\sub\file.txt"))
-                .is_ok()
-        );
+        assert!(mock_policy.check_path_allowed(Path::new(valid)).is_ok());
 
         let tmp = tempfile::tempdir().unwrap();
         let real_policy = PolicyContext {

@@ -827,10 +827,13 @@ fn shortcuts_view_mock_backend_fix_delete_unknown_and_net_unicode() {
         mock.clone(),
     );
     let rows = provider.query(&TableQuery::default()).unwrap();
+    let expected_empty = empty_lnk
+        .to_string_lossy()
+        .replace(['/', '\\'], std::path::MAIN_SEPARATOR_STR);
     let empty_row = rows
         .rows
         .iter()
-        .find(|r| r.cells[0] == CellValue::Text(r"C:\mock_lnk\empty.lnk".to_string()))
+        .find(|r| r.cells[0] == CellValue::Text(expected_empty.clone()))
         .unwrap();
     assert_eq!(empty_row.cells[2], CellValue::Bool(false));
 

@@ -1,6 +1,6 @@
 class Fs2rust < Formula
   desc "24-tool pure-Rust filesystem search, NTFS/disk telemetry, and structured data suite"
-  homepage "https://fs2rust.guap.ca"
+  homepage "https://guap.ca/fs2rust/"
   version "0.1.0"
   license "Apache-2.0"
 

@@ -442,7 +442,7 @@ fn build_default_data_providers(synthetic: bool) -> Vec<Arc<dyn TableProvider>> 
 
         let html_provider = HtmlAsTextProvider::from_bytes(
             "synthetic.html",
-            b"<html><head><title>FS2Rust Sample</title></head><body><h1>Hello</h1><p>Visit <a href=\"https://fs2rust.guap.ca\">FS2Rust</a>.</p></body></html>",
+            b"<html><head><title>FS2Rust Sample</title></head><body><h1>Hello</h1><p>Visit <a href=\"https://guap.ca/fs2rust/\">FS2Rust</a>.</p></body></html>",
             &HtmlAsTextOptions::default(),
         );
 

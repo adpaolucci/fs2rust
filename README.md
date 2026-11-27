@@ -1,6 +1,6 @@
 # `fs2rust` — 24-Tool Pure-Rust Filesystem Search, NTFS/USN/SMART & Structured Data Suite
 
-Part of the **GUAP** Ecosystem (`guap.ca`) • [**Project Hub & Web Documentation: https://fs2rust.guap.ca**](https://fs2rust.guap.ca) • [**Project Wiki**](https://github.com/adpaolucci/fs2rust/wiki)
+Part of the **GUAP** Ecosystem (`guap.ca`) • [**Project Hub & Web Documentation: https://guap.ca/fs2rust/**](https://guap.ca/fs2rust/) • [**Project Wiki**](https://github.com/adpaolucci/fs2rust/wiki)
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Rust: 2024](https://img.shields.io/badge/Rust-2024%20(1.88%2B)-orange.svg)](Cargo.toml)

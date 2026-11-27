@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "24-tool pure-Rust filesystem search, NTFS/disk/ETW telemetry, and structured data utility suite with dual Win32/Iced GUIs, CLI, Merkle custody reports, and policy-gated MCP server.",
   "repository": "https://github.com/adpaolucci/fs2rust",
-  "homepage": "https://fs2rust.guap.ca",
+  "homepage": "https://guap.ca/fs2rust/",
   "license": "Apache-2.0",
   "binaries": [
     "fs2rust",
@@ -18,5 +18,168 @@
     "7 pure-Rust structured data tools: CSV/TSV viewer, table diff, tabular query evaluator, JPEG/TIFF EXIF parser, template codegen, HTML-to-text, and contact book reader",
     "Native Win32 (WinSafe) & Iced 0.14 dual GUIs, 7-format guap-export with CSV formula neutralization + SHA-256/512 Merkle custody manifests",
     "Policy-gated MCP JSON-RPC 2.0 (2024-11-05) stdio server enforcing ReadOnlyOnly default and -32003 refusal on unconfirmed mutations"
+  ],
+  "mcp_tools_count": 32,
+  "tools": [
+    {
+      "id": "alternate_stream_view",
+      "readOnly": true,
+      "summary": "Enumerate NTFS Alternate Data Streams via FindFirstStreamW/FindNextStreamW or offline $MFT records"
+    },
+    {
+      "id": "app_read_write_counter",
+      "readOnly": true,
+      "summary": "Count per-application read/write operations and byte transfer rates using GetProcessIoCounters"
+    },
+    {
+      "id": "bulk_file_time",
+      "readOnly": true,
+      "summary": "Preview bulk file/folder timestamp and attribute changes (ReadOnly dry-run)"
+    },
+    {
+      "id": "disk_counters_view",
+      "readOnly": true,
+      "summary": "Query Windows physical/logical disk read/write counters and queue depth via IOCTL_DISK_PERFORMANCE"
+    },
+    {
+      "id": "disk_smart_view",
+      "readOnly": true,
+      "summary": "Read ATA S.M.A.R.T. attributes/thresholds and NVMe Health Log Page 0x02 telemetry from physical drives"
+    },
+    {
+      "id": "drive_letter_view",
+      "readOnly": true,
+      "summary": "Enumerate logical drives, volume GUIDs, capacities, DOS targets, and HKLM\\SYSTEM\\MountedDevices mappings"
+    },
+    {
+      "id": "file_access_error_view",
+      "readOnly": true,
+      "summary": "Detect failed file open/read/write/delete operations via ETW Kernel-File OperationEnd non-zero NTSTATUS codes"
+    },
+    {
+      "id": "file_activity_watch",
+      "readOnly": true,
+      "summary": "Monitor real-time file system read/write/open/close activity via Microsoft-Windows-Kernel-File ETW"
+    },
+    {
+      "id": "folder_changes_view",
+      "readOnly": true,
+      "summary": "Monitor file/folder creations, deletions, modifications, and renames via ReadDirectoryChangesW or snapshot diff"
+    },
+    {
+      "id": "folder_time_update",
+      "readOnly": true,
+      "summary": "Preview bottom-up folder timestamp updates from newest child files (ReadOnly)"
+    },
+    {
+      "id": "folders_report",
+      "readOnly": true,
+      "summary": "Compute directory logical size, allocated/compressed size on disk, file/subfolder counts, and parent percentage"
+    },
+    {
+      "id": "fs2rust.data.addr_view",
+      "readOnly": true,
+      "summary": "Pure-Rust contact book reader for vCard (.vcf), LDIF (.ldif), and contact CSV files"
+    },
+    {
+      "id": "fs2rust.data.csv_file_view",
+      "readOnly": true,
+      "summary": "Dynamic CSV/TSV viewer with auto-delimiter, encoding detection, and typed column inference"
+    },
+    {
+      "id": "fs2rust.data.exif_data_view",
+      "readOnly": true,
+      "summary": "Pure-Rust JPEG APP1 and TIFF IFD0/Exif/GPS/Interop/IFD1 EXIF metadata parser"
+    },
+    {
+      "id": "fs2rust.data.html_as_text",
+      "readOnly": true,
+      "summary": "Pure-Rust HTML-to-text extractor preserving headings, lists, tables, preformatted blocks, and link footnotes"
+    },
+    {
+      "id": "fs2rust.data.query",
+      "readOnly": true,
+      "summary": "Evaluate tabular queries (columns, where, sort, top) and format outputs"
+    },
+    {
+      "id": "fs2rust.data.simple_code_generator",
+      "readOnly": true,
+      "summary": "Template-based snippet generator from regex captures, CSV, JSON, or TableData"
+    },
+    {
+      "id": "fs2rust.data.table_text_compare",
+      "readOnly": true,
+      "summary": "Compare two CSV/TSV/JSONL/TableData inputs by key columns or row position"
+    },
+    {
+      "id": "hash_files",
+      "readOnly": true,
+      "summary": "Compute MD5, SHA1, SHA256, SHA512, and CRC32 in a single streaming read pass and group identical files"
+    },
+    {
+      "id": "ntfs_links_view",
+      "readOnly": true,
+      "summary": "Inspect NTFS symbolic links, directory junctions, reparse points, and hardlinks"
+    },
+    {
+      "id": "property_system_view",
+      "readOnly": true,
+      "summary": "Read Windows Property System metadata via SHGetPropertyStoreFromParsingName / IPropertyStore"
+    },
+    {
+      "id": "search_files",
+      "readOnly": true,
+      "summary": "Search files and directories with wildcards, size/time/attribute filters, text/regex/binary content grep, and SHA-256 duplicate grouping"
+    },
+    {
+      "id": "shortcuts_view",
+      "readOnly": true,
+      "summary": "Parse Windows [MS-SHLLINK] .lnk shortcuts and detect broken targets"
+    },
+    {
+      "id": "usn_journal_view",
+      "readOnly": true,
+      "summary": "Query and read NTFS Change Journal ($UsnJrnl:$J) USN_RECORD_V2/V3 records"
+    },
+    {
+      "id": "alternate_stream_delete",
+      "readOnly": false,
+      "summary": "Delete a named NTFS Alternate Data Stream (refuses default ::$DATA stream)"
+    },
+    {
+      "id": "bulk_file_time_apply",
+      "readOnly": false,
+      "summary": "Apply bulk timestamp and attribute changes to target files and folders"
+    },
+    {
+      "id": "drive_letter_assign",
+      "readOnly": false,
+      "summary": "Assign a volume GUID to a drive letter or NTFS mount-point directory (SetVolumeMountPointW)"
+    },
+    {
+      "id": "drive_letter_remove",
+      "readOnly": false,
+      "summary": "Remove a drive letter or NTFS mount-point mapping (DeleteVolumeMountPointW)"
+    },
+    {
+      "id": "folder_time_update_apply",
+      "readOnly": false,
+      "summary": "Update folder timestamps bottom-up to match their newest child files"
+    },
+    {
+      "id": "property_system_set",
+      "readOnly": false,
+      "summary": "Set a Windows Property System canonical property on a file via IPropertyStore (GPS_READWRITE)"
+    },
+    {
+      "id": "shortcuts_delete",
+      "readOnly": false,
+      "summary": "Delete Windows .lnk shortcuts (guarded by only_if_broken = true by default)"
+    },
+    {
+      "id": "shortcuts_fix_target",
+      "readOnly": false,
+      "summary": "Update the target path, working directory, or arguments inside a Windows .lnk shortcut"
+    }
   ]
 }

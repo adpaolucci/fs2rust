@@ -87,7 +87,10 @@ impl TableProvider for TabularQueryProvider {
 }
 
 /// Evaluate a [`TabularQueryRequest`] over any [`TabularQuerySource`].
-pub fn evaluate_query(source: TabularQuerySource, req: &TabularQueryRequest) -> Result<TabularQueryEvaluation, DataError> {
+pub fn evaluate_query(
+    source: TabularQuerySource,
+    req: &TabularQueryRequest,
+) -> Result<TabularQueryEvaluation, DataError> {
     let sort = match &req.sort {
         Some(spec) if !spec.trim().is_empty() => GuapQuery::parse_sort(spec)?,
         _ => Vec::new(),

@@ -130,10 +130,7 @@ mod tests {
         assert_eq!(single_manifest.merkle_root_sha512.len(), 128);
 
         let bundle_dir = tmp.path().join("bundle");
-        let tables = vec![
-            sample_table("search_files"),
-            sample_table("fs2rust.data.csv_file_view"),
-        ];
+        let tables = vec![sample_table("search_files"), sample_table("fs2rust.data.csv_file_view")];
         let bundle = write_bundle_report(&tables, &bundle_dir, ExportFormat::Markdown, &opts).unwrap();
         assert_eq!(bundle.artifact_count, 2);
         assert_eq!(bundle.merkle_root_sha256.len(), 64);

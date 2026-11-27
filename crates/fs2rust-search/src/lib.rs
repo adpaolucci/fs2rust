@@ -21,8 +21,8 @@ pub use folders_report::{FoldersReportConfig, FoldersReportProvider};
 pub use hash_files::{HashAlgorithmSet, HashFilesConfig, HashFilesProvider};
 pub use search_files::{ContentSearchMode, SearchFilesConfig, SearchFilesProvider};
 pub use shortcuts::{
-    ExtraDataBlock, LinkInfo, LinkTargetIdList, ShellLinkFile, ShellLinkHeader, ShortcutsConfig,
-    ShortcutsDeleteAction, ShortcutsFixAction, ShortcutsProvider, ShowCommand, StringData,
+    ExtraDataBlock, LinkInfo, LinkTargetIdList, ShellLinkFile, ShellLinkHeader, ShortcutsConfig, ShortcutsDeleteAction,
+    ShortcutsFixAction, ShortcutsProvider, ShowCommand, StringData,
 };
 
 /// Register all 6 `fs2rust-search` read-only `TableProvider`s and 4 mutating `ActionCommand`s

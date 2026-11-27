@@ -778,10 +778,7 @@ pub fn build_synthetic_suite_wiring_with_mocks() -> (SuiteWiring, Arc<MockFileSy
             Arc::clone(&fs_backend),
         )),
         Arc::new(FoldersReportProvider::new(folders_report_cfg, Arc::clone(&fs_backend))),
-        Arc::new(ShortcutsProvider::with_backend(
-            shortcuts_cfg,
-            Arc::clone(&fs_backend),
-        )),
+        Arc::new(ShortcutsProvider::with_backend(shortcuts_cfg, Arc::clone(&fs_backend))),
         Arc::new(HashFilesProvider::new(hash_cfg)),
         // fs2rust-ntfs (11)
         Arc::new(DriveLetterProvider::new(

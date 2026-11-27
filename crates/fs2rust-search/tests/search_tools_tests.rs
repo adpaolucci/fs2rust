@@ -9,9 +9,7 @@ use fs2rust_search::folder_time_update::{
 use fs2rust_search::folders_report::{FoldersReportConfig, FoldersReportProvider};
 use fs2rust_search::hash_files::{HashAlgorithmSet, HashFilesConfig, HashFilesProvider};
 use fs2rust_search::register_search_tools_with_backend;
-use fs2rust_search::search_files::{
-    ContentSearchMode, SearchFilesConfig, SearchFilesProvider, parse_hex_pattern,
-};
+use fs2rust_search::search_files::{ContentSearchMode, SearchFilesConfig, SearchFilesProvider, parse_hex_pattern};
 use fs2rust_search::shortcuts::{
     ExtraDataBlock, LinkInfo, LinkTargetIdList, SHELL_LINK_CLSID, SHELL_LINK_HEADER_SIZE, ShellLinkFile,
     ShellLinkHeader, ShortcutsConfig, ShortcutsDeleteAction, ShortcutsFixAction, ShortcutsProvider, ShowCommand,

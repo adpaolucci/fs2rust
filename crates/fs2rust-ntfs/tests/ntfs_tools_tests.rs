@@ -1,18 +1,20 @@
 use chrono::{TimeZone, Utc};
 use fs2rust_core::{FileAttributes, FileEntry, FileTimestamps, FsError, PolicyContext, datetime_to_windows_filetime};
+#[cfg(windows)]
+use fs2rust_ntfs::LiveNtfsBackend;
 use fs2rust_ntfs::{
     AdsEntry, AlternateStreamConfig, AlternateStreamDeleteAction, AppReadWriteConfig, DiskCountersConfig,
     DiskPerformanceRecord, DiskSmartConfig, DriveLetterAssignAction, DriveLetterConfig, DriveLetterEntry,
     DriveLetterRemoveAction, FileAccessErrorConfig, FileActivityConfig, FilePropertyEntry, FolderChangeAction,
     FolderChangeEntry, FolderChangesConfig, FolderSnapshot, IoCounters, KERNEL_FILE_MAGIC, KernelFileRawEvent,
-    LiveNtfsBackend, MountedDeviceTarget, NtfsBackend, NtfsLinkEntry, NtfsLinksConfig, NtfsToolsConfig,
-    ProcessIoSnapshot, PropertySystemConfig, PropertySystemSetAction, ReparseKind, UsnJournalConfig, UsnQueryMode,
-    UsnRecord, ata_checksum_valid, ata_page_to_records, compute_io_rates, correlate_file_access_errors,
-    correlate_file_activity, decode_ntstatus, decode_usn_reasons, encode_kernel_file_wire_record, normalize_ads_target,
-    nvme_log_to_records, parse_ata_smart_attributes, parse_disk_performance, parse_file_notify_buffer,
-    parse_io_counters, parse_kernel_file_wire_stream, parse_mft_ads_records, parse_mft_file_record_ads,
-    parse_mounted_device_value, parse_nvme_health_log, parse_reparse_data_buffer, parse_serialized_property_storage,
-    parse_usn_ioctl_buffer, parse_usn_journal_stream, register_ntfs_tools_with_backend,
+    MountedDeviceTarget, NtfsBackend, NtfsLinkEntry, NtfsLinksConfig, NtfsToolsConfig, ProcessIoSnapshot,
+    PropertySystemConfig, PropertySystemSetAction, ReparseKind, UsnJournalConfig, UsnQueryMode, UsnRecord,
+    ata_checksum_valid, ata_page_to_records, compute_io_rates, correlate_file_access_errors, correlate_file_activity,
+    decode_ntstatus, decode_usn_reasons, encode_kernel_file_wire_record, normalize_ads_target, nvme_log_to_records,
+    parse_ata_smart_attributes, parse_disk_performance, parse_file_notify_buffer, parse_io_counters,
+    parse_kernel_file_wire_stream, parse_mft_ads_records, parse_mft_file_record_ads, parse_mounted_device_value,
+    parse_nvme_health_log, parse_reparse_data_buffer, parse_serialized_property_storage, parse_usn_ioctl_buffer,
+    parse_usn_journal_stream, register_ntfs_tools_with_backend,
 };
 use guap_mcp::{ActionCommand, McpServerRegistry, PolicyMode};
 use serde_json::{Value, json};

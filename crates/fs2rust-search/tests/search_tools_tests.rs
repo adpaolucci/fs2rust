@@ -172,6 +172,7 @@ fn bulk_file_time_mock_readonly_ordering_and_live_windows() {
     let real_meta = os_fs.metadata(&real_file).unwrap();
     assert_eq!(real_meta.timestamps.modified, Some(t1));
     assert!(real_meta.attributes.read_only);
+    #[cfg(windows)]
     assert!(real_meta.attributes.hidden);
 
     // Clear READONLY so tempdir cleans up cleanly

@@ -711,6 +711,7 @@ mod tests {
         fs.set_attributes(&file, &attrs).unwrap();
         let updated = fs.metadata(&file).unwrap();
         assert!(updated.attributes.read_only);
+        #[cfg(windows)]
         assert!(updated.attributes.hidden);
 
         fs.set_attributes(&file, &FileAttributes::default()).unwrap();
